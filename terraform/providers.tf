@@ -9,7 +9,7 @@ terraform {
       version = "~> 1.50"
     }
   }
-  
+
   # Configure the backend to store state in Azure Storage
   backend "azurerm" {
     # TODO: Replace these with your actual storage account details
