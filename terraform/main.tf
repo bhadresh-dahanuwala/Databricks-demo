@@ -48,6 +48,24 @@ resource "azurerm_role_assignment" "ext_storage_role" {
   principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
 }
 
+resource "azurerm_role_assignment" "ext_storage_account_contributor" {
+  scope                = azurerm_storage_account.ext_storage.id
+  role_definition_name = "Storage Account Contributor"
+  principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "ext_eventgrid_contributor" {
+  scope                = azurerm_storage_account.ext_storage.id
+  role_definition_name = "EventGrid EventSubscription Contributor"
+  principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "ext_storage_queue_contributor" {
+  scope                = azurerm_storage_account.ext_storage.id
+  role_definition_name = "Storage Queue Data Contributor"
+  principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
+}
+
 # Grant Access Connector 'Reader' role ON ITSELF (Databricks UC requirement for Managed Identities)
 resource "azurerm_role_assignment" "ext_access_connector_reader" {
   scope                = azurerm_databricks_access_connector.ext_access_connector.id
@@ -65,6 +83,9 @@ resource "databricks_storage_credential" "ext_storage_cred" {
   # Ensure the role assignments exist before creating the credential
   depends_on = [
     azurerm_role_assignment.ext_storage_role,
+    azurerm_role_assignment.ext_storage_account_contributor,
+    azurerm_role_assignment.ext_eventgrid_contributor,
+    azurerm_role_assignment.ext_storage_queue_contributor,
     azurerm_role_assignment.ext_access_connector_reader
   ]
 }
