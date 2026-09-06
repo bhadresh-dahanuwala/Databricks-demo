@@ -23,7 +23,7 @@ resources:
       name: "Trigger Customer Ingestion on File Arrival"
       trigger:
         file_arrival:
-          url: /Volumes/${var.catalog}/default/raw_vol/
+          url: /Volumes/${var.catalog}/raw/raw_vol/
       tasks:
         - task_key: run_dlt_pipeline
           pipeline_task:
