@@ -36,14 +36,22 @@ resource "azurerm_storage_account" "ext_storage" {
 
 resource "azurerm_storage_container" "ext_container" {
   name                  = "ecomm-ext"
-  storage_account_name  = azurerm_storage_account.ext_storage.name
+  storage_account_id    = azurerm_storage_account.ext_storage.id
   container_access_type = "private"
 }
 
-# 5. Role Assignment: Grant Access Connector permission on the Storage Account
+# 5. Role Assignments
+# Grant Access Connector permission on the Storage Account
 resource "azurerm_role_assignment" "ext_storage_role" {
   scope                = azurerm_storage_account.ext_storage.id
   role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
+}
+
+# Grant Access Connector 'Reader' role ON ITSELF (Databricks UC requirement for Managed Identities)
+resource "azurerm_role_assignment" "ext_access_connector_reader" {
+  scope                = azurerm_databricks_access_connector.ext_access_connector.id
+  role_definition_name = "Reader"
   principal_id         = azurerm_databricks_access_connector.ext_access_connector.identity[0].principal_id
 }
 
@@ -54,8 +62,11 @@ resource "databricks_storage_credential" "ext_storage_cred" {
     access_connector_id = azurerm_databricks_access_connector.ext_access_connector.id
   }
 
-  # Ensure the role assignment exists before creating the credential
-  depends_on = [azurerm_role_assignment.ext_storage_role]
+  # Ensure the role assignments exist before creating the credential
+  depends_on = [
+    azurerm_role_assignment.ext_storage_role,
+    azurerm_role_assignment.ext_access_connector_reader
+  ]
 }
 
 # 7. Databricks External Location
