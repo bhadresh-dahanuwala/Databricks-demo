@@ -10,6 +10,7 @@ resources:
   pipelines:
     customer_raw_ingestion:
       name: "Customer Raw Ingestion Pipeline"
+      serverless: true
       development: true 
       continuous: false
       catalog: ${var.catalog}
