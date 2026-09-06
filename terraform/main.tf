@@ -82,7 +82,7 @@ resource "databricks_catalog" "ecomm" {
   name          = "ecomm"
   storage_root  = databricks_external_location.ext_loc.url
   force_destroy = true
-  owner         = "users"
+  owner         = "account users"
 }
 
 # 9. Databricks Schemas
@@ -94,7 +94,7 @@ resource "databricks_schema" "ecomm_schemas" {
   for_each     = toset(local.schemas)
   catalog_name = databricks_catalog.ecomm.name
   name         = each.key
-  owner        = "users"
+  owner        = "account users"
 }
 
 # 10. Databricks Volumes
@@ -105,5 +105,5 @@ resource "databricks_volume" "ecomm_volumes" {
   catalog_name = databricks_catalog.ecomm.name
   schema_name  = databricks_schema.ecomm_schemas[each.key].name
   volume_type  = "MANAGED"
-  owner        = "users"
+  owner        = "account users"
 }
