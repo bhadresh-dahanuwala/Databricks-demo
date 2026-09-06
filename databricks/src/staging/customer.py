@@ -169,3 +169,17 @@ def staging_customer_contact():
             explode(col("contact_numbers")).alias("contact_number")
         )
     )
+
+@dlt.table(
+    name="customer_contact_quarantine",
+    comment="Customer contact records missing a mandatory field or failing an expected data type."
+)
+def staging_customer_contact_quarantine():
+    return (
+        dlt.read_stream("customer_contact_parsed")
+        .filter("_is_invalid = true")
+        .select(
+            to_json(struct("*")).alias("raw_record"),
+            current_timestamp().alias("quarantined_at"),
+        )
+    )
