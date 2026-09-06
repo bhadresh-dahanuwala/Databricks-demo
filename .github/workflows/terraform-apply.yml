@@ -39,7 +39,7 @@ jobs:
         terraform_version: "1.9.5"
 
     - name: Terraform Init
-      run: terraform init
+      run: terraform init -input=false
       env:
         # These are used specifically by the azurerm backend during init
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
