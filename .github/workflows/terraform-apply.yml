@@ -17,10 +17,9 @@ env:
   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-  # If you ended up adding this as a secret, this will pick it up. Otherwise it defaults to true.
   ARM_USE_OIDC: ${{ secrets.ARM_USE_OIDC || 'true' }}
-        ARM_USE_MSI: false
-        ARM_USE_CLI: false
+  ARM_USE_MSI: false
+  ARM_USE_CLI: false
 
 jobs:
   terraform:
@@ -43,13 +42,7 @@ jobs:
     - name: Terraform Init
       run: terraform init -input=false
       env:
-        # These are used specifically by the azurerm backend during init
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-        ARM_USE_OIDC: ${{ secrets.ARM_USE_OIDC || 'true' }}
-        ARM_USE_MSI: false
-        ARM_USE_CLI: false
+        TF_LOG: DEBUG
 
     - name: Terraform Format
       run: terraform fmt -check
