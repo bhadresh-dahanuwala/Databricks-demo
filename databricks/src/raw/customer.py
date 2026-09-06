@@ -4,7 +4,7 @@ from pyspark.sql.functions import *
 # You can access bundle variables or Spark configs injected by the pipeline.
 # For example, we assume the catalog and schema are passed as variables or we default them.
 # Hardcoding a placeholder here, but you can replace with your actual volume path.
-VOLUME_PATH = "/Volumes/ecomm/default/raw_vol"
+VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
 
 @dlt.table(
     name="raw.customer",
