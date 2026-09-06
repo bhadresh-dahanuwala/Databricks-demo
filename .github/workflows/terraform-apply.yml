@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 # Required for OIDC authentication with Azure
 permissions:
@@ -20,8 +20,8 @@ env:
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   ARM_USE_OIDC: ${{ secrets.ARM_USE_OIDC || 'true' }}
   ARM_USE_MSI: false
-        ARM_USE_AZUREAD: true
   ARM_USE_CLI: false
+  ARM_USE_AZUREAD: true
 
 jobs:
   terraform:
