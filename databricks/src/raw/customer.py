@@ -14,6 +14,7 @@ def raw_customer_ingestion():
     return (
         spark.readStream.format("cloudFiles")
         .option("cloudFiles.format", "json")
+        .option("multiLine", "true")
         # Infer schema and evolve it if it changes
         .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_customer")
         .option("cloudFiles.inferColumnTypes", "true")
