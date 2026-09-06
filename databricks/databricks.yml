@@ -6,9 +6,6 @@ variables:
     description: Catalog name
     default: ecomm
 
-workspace:
-  # The host is dynamically provided by the GitHub Action via the DATABRICKS_HOST env var
-  host: ${workspace.host}
 
 resources:
   jobs:
