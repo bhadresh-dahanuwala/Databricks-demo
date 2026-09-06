@@ -34,6 +34,58 @@ resources:
         - file:
             path: ./src/raw/generic_ingestion.py
 
+    order_raw_pipeline:
+      name: "Order Raw Ingestion"
+      serverless: true
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      configuration:
+        entity_name: "order"
+      libraries:
+        - file:
+            path: ./src/raw/generic_ingestion.py
+
+    order_item_raw_pipeline:
+      name: "Order Item Raw Ingestion"
+      serverless: true
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      configuration:
+        entity_name: "order_item"
+      libraries:
+        - file:
+            path: ./src/raw/generic_ingestion.py
+
+    return_raw_pipeline:
+      name: "Return Raw Ingestion"
+      serverless: true
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      configuration:
+        entity_name: "return"
+      libraries:
+        - file:
+            path: ./src/raw/generic_ingestion.py
+
+    return_item_raw_pipeline:
+      name: "Return Item Raw Ingestion"
+      serverless: true
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      configuration:
+        entity_name: "return_item"
+      libraries:
+        - file:
+            path: ./src/raw/generic_ingestion.py
+
   jobs:
     trigger_raw_ingestion:
       name: "Trigger Raw Ingestion on File Arrival"
@@ -47,3 +99,15 @@ resources:
         - task_key: run_product_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.product_raw_pipeline.id}
+        - task_key: run_order_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.order_raw_pipeline.id}
+        - task_key: run_order_item_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.order_item_raw_pipeline.id}
+        - task_key: run_return_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.return_raw_pipeline.id}
+        - task_key: run_return_item_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.return_item_raw_pipeline.id}
