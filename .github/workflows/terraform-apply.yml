@@ -19,6 +19,7 @@ env:
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   ARM_USE_OIDC: ${{ secrets.ARM_USE_OIDC || 'true' }}
   ARM_USE_MSI: false
+        ARM_USE_AZUREAD: true
   ARM_USE_CLI: false
 
 jobs:
