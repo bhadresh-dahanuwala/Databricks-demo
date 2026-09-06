@@ -10,9 +10,7 @@ terraform {
     }
   }
 
-  # Configure the backend to store state in Azure Storage
   backend "azurerm" {
-    # TODO: Replace these with your actual storage account details
     resource_group_name  = "rg-terraform"
     storage_account_name = "stterraformbd"
     container_name       = "tfstate"
@@ -26,8 +24,6 @@ provider "azurerm" {
   use_oidc = true
 }
 
-# The Databricks provider will use Azure AD (Entra ID) credentials from the azurerm provider
 provider "databricks" {
-  # host = azurerm_databricks_workspace.this.workspace_url
-  # We will configure this fully once we build the workspace resource in main.tf
+  host = azurerm_databricks_workspace.dbw.workspace_url
 }
