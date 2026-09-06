@@ -54,4 +54,4 @@ jobs:
 
     - name: Deploy Bundle
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: databricks bundle deploy
+      run: databricks bundle deploy --auto-approve
