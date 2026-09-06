@@ -6,6 +6,25 @@ variables:
     description: Catalog name
     default: ecomm
 
-resources: {}
-  # You can define your jobs, pipelines, and dashboards here later
-  # once we have uploaded the data and are ready to build the pipelines.
+resources:
+  pipelines:
+    customer_raw_ingestion:
+      name: "Customer Raw Ingestion Pipeline"
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      libraries:
+        - file:
+            path: ./src/raw/customer.py
+
+  jobs:
+    trigger_customer_ingestion:
+      name: "Trigger Customer Ingestion on File Arrival"
+      trigger:
+        file_arrival:
+          url: /Volumes/${var.catalog}/default/raw_vol/
+      tasks:
+        - task_key: run_dlt_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.customer_raw_ingestion.id}
