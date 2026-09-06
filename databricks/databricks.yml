@@ -18,6 +18,8 @@ resources:
       libraries:
         - file:
             path: ./src/raw/customer.py
+        - file:
+            path: ./src/raw/product.py
 
   jobs:
     trigger_customer_ingestion:
