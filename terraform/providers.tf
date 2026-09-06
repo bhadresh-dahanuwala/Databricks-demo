@@ -13,8 +13,8 @@ terraform {
   # Configure the backend to store state in Azure Storage
   backend "azurerm" {
     # TODO: Replace these with your actual storage account details
-    resource_group_name  = "<YOUR-TFSTATE-RESOURCE-GROUP>"
-    storage_account_name = "<YOUR-TFSTATE-STORAGE-ACCOUNT>"
+    resource_group_name  = "rg-terraform"
+    storage_account_name = "stterraformbd"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
     use_oidc             = true
