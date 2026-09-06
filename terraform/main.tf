@@ -134,7 +134,7 @@ resource "databricks_volume" "ecomm_volumes" {
 resource "databricks_grants" "schema_grants" {
   for_each = toset(local.schemas)
   schema   = "${databricks_catalog.ecomm.name}.${databricks_schema.ecomm_schemas[each.key].name}"
-  
+
   grant {
     principal  = "account users"
     privileges = ["USE_SCHEMA", "SELECT"]
