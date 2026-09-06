@@ -1,0 +1,11 @@
+bundle:
+  name: ecomm_bundle
+
+variables:
+  catalog:
+    description: Catalog name
+    default: ecomm
+
+resources: {}
+  # You can define your jobs, pipelines, and dashboards here later
+  # once we have uploaded the data and are ready to build the pipelines.
