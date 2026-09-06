@@ -7,7 +7,7 @@ from pyspark.sql.functions import *
 VOLUME_PATH = "/Volumes/ecomm/default/raw_vol"
 
 @dlt.table(
-    name="raw_customer",
+    name="raw.customer",
     comment="Raw customer data ingested incrementally from the raw_vol volume using Auto Loader."
 )
 def raw_customer_ingestion():
