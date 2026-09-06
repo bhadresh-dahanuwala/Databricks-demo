@@ -8,24 +8,42 @@ variables:
 
 resources:
   pipelines:
-    customer_raw_ingestion:
-      name: "Customer Raw Ingestion Pipeline"
+    customer_raw_pipeline:
+      name: "Customer Raw Ingestion"
       serverless: true
       development: true 
       continuous: false
       catalog: ${var.catalog}
       schema: raw
+      configuration:
+        entity_name: "customer"
       libraries:
         - file:
-            path: ./src/raw/customer.py
+            path: ./src/raw/generic_ingestion.py
+
+    product_raw_pipeline:
+      name: "Product Raw Ingestion"
+      serverless: true
+      development: true 
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      configuration:
+        entity_name: "product"
+      libraries:
+        - file:
+            path: ./src/raw/generic_ingestion.py
 
   jobs:
-    trigger_customer_ingestion:
-      name: "Trigger Customer Ingestion on File Arrival"
+    trigger_raw_ingestion:
+      name: "Trigger Raw Ingestion on File Arrival"
       trigger:
         file_arrival:
           url: /Volumes/${var.catalog}/raw/raw_vol/
       tasks:
-        - task_key: run_dlt_pipeline
+        - task_key: run_customer_pipeline
           pipeline_task:
-            pipeline_id: ${resources.pipelines.customer_raw_ingestion.id}
+            pipeline_id: ${resources.pipelines.customer_raw_pipeline.id}
+        - task_key: run_product_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.product_raw_pipeline.id}
