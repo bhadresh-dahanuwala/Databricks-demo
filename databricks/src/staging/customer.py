@@ -19,6 +19,14 @@ CUSTOMER_SCHEMA = {
 def customer_parsed():
     df = spark.readStream.table("ecomm.raw.customer")
 
+    # FIX: If Auto Loader has never seen an optional column (e.g. 'email'), 
+    # it won't exist in the raw table schema at all, causing an UNRESOLVED_COLUMN error.
+    # We must pad any missing contract columns with NULLs before validating.
+    from pyspark.sql.functions import lit
+    for c in CUSTOMER_SCHEMA.keys():
+        if c not in df.columns:
+            df = df.withColumn(c, lit(None).cast("string"))
+
     is_invalid = None
     for c, spec in CUSTOMER_SCHEMA.items():
         raw_col = col(c)
