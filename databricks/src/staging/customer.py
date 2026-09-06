@@ -183,3 +183,56 @@ def staging_customer_contact_quarantine():
             current_timestamp().alias("quarantined_at"),
         )
     )
+
+@dlt.view(name="customer_address_parsed")
+def customer_address_parsed():
+    df = spark.readStream.table("ecomm.raw.customer")
+    df = pad_missing_columns(df, CUSTOMER_ADDRESS_SCHEMA)
+
+    is_invalid = None
+    for c, spec in CUSTOMER_ADDRESS_SCHEMA.items():
+        casted, bad = _validate(col(c), spec)
+        is_invalid = bad if is_invalid is None else (is_invalid | bad)
+        df = df.withColumn(c, casted)
+
+    return (
+        df.withColumn("_is_invalid", is_invalid)
+        .withColumnRenamed("id", "customer_id")
+    )
+
+@dlt.table(
+    name="customer_address",
+    comment="One-to-many relationship table containing customer_id and flattened address fields."
+)
+def staging_customer_address():
+    return (
+        dlt.read_stream("customer_address_parsed")
+        .filter("_is_invalid = false")
+        .select(
+            col("customer_id"),
+            explode(col("addresses")).alias("address")
+        )
+        .select(
+            col("customer_id"),
+            col("address.address_type"),
+            col("address.line_1"),
+            col("address.line_2"),
+            col("address.city"),
+            col("address.state"),
+            col("address.zip")
+        )
+    )
+
+@dlt.table(
+    name="customer_address_quarantine",
+    comment="Customer address records missing a mandatory field or failing an expected data type."
+)
+def staging_customer_address_quarantine():
+    return (
+        dlt.read_stream("customer_address_parsed")
+        .filter("_is_invalid = true")
+        .select(
+            to_json(struct("*")).alias("raw_record"),
+            current_timestamp().alias("quarantined_at"),
+        )
+    )
