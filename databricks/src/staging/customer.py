@@ -1,6 +1,6 @@
 import dlt
 from functools import reduce
-from pyspark.sql.functions import col, try_cast, transform, exists, struct, to_json, current_timestamp, explode
+from pyspark.sql.functions import col, transform, exists, struct, to_json, current_timestamp, explode
 
 # --- Declared contract for this entity -------------------------------------
 # mandatory=True  -> field must be present; missing OR wrong type -> quarantine
@@ -79,7 +79,7 @@ def _validate(value_col, spec):
         return casted_array, is_invalid
 
     # leaf field: scalar, or an array of primitives (e.g. array<string>)
-    cast_val = try_cast(value_col, spec["type"])
+    cast_val = value_col.cast(spec["type"])
     missing = value_col.isNull()
     is_invalid = (missing & spec["mandatory"]) | (value_col.isNotNull() & cast_val.isNull())
     return cast_val, is_invalid
