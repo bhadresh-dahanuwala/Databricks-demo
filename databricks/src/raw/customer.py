@@ -16,7 +16,8 @@ def raw_customer_ingestion():
         .option("cloudFiles.format", "json")
         # Infer schema and evolve it if it changes
         .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_customer")
-        .option("cloudFiles.inferColumnTypes", True)
-        # Read from any yyyymmdd directory (using a wildcard)
-        .load(f"{VOLUME_PATH}/*/customers.json")
+        .option("cloudFiles.inferColumnTypes", "true")
+        # Use pathGlobFilter to find customers.json in any subfolder
+        .option("pathGlobFilter", "customers.json")
+        .load(VOLUME_PATH)
     )
