@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col, try_cast, get_json_object, to_json, struct, current_timestamp
+from pyspark.sql.functions import col, expr, get_json_object, to_json, struct, current_timestamp
 
 # --- Declared contract for this entity -------------------------------------
 # mandatory=True  -> column must be present; missing OR wrong type -> quarantine
@@ -22,7 +22,7 @@ def customer_parsed():
     is_invalid = None
     for c, spec in CUSTOMER_SCHEMA.items():
         raw_col = col(c)
-        cast_val = try_cast(raw_col, spec["type"])
+        cast_val = expr(f"try_cast(`{c}` AS {spec['type']})")
 
         # Auto Loader already flags a value that conflicted with the raw
         # layer's inferred schema by nulling the column and recording the
