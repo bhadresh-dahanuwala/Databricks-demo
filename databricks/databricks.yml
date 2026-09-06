@@ -1,0 +1,45 @@
+bundle:
+  name: ecomm_bundle
+
+variables:
+  catalog:
+    description: Catalog name
+    default: ecomm
+
+workspace:
+  # The host is dynamically provided by the GitHub Action via the DATABRICKS_HOST env var
+  host: ${workspace.host}
+
+resources:
+  jobs:
+    ecomm_etl_job:
+      name: ecomm-etl-job
+      tasks:
+        - task_key: run_notebook
+          notebook_task:
+            notebook_path: ../src/etl_notebook.py
+          job_cluster_key: default_cluster
+      job_clusters:
+        - job_cluster_key: default_cluster
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 1
+
+  pipelines:
+    ecomm_dlt:
+      name: ecomm-dlt-pipeline
+      catalog: ${var.catalog}
+      target: raw
+      libraries:
+        - notebook:
+            path: ../src/dlt_pipeline.py
+      clusters:
+        - label: default
+          node_type_id: Standard_DS3_v2
+          num_workers: 1
+
+  # dashboards:
+  #   ecomm_dashboard:
+  #     display_name: "E-Commerce Dashboard"
+  #     file_path: ../resources/dashboards/ecomm_dashboard.lvdash.json

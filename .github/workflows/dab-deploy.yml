@@ -1,0 +1,57 @@
+name: 'Databricks Asset Bundle Deploy'
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  # Databricks CLI uses these specific environment variables for Azure OIDC authentication
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+jobs:
+  deploy:
+    name: 'Deploy DAB'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./databricks
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Azure Login (to dynamically fetch Workspace URL)
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.ARM_CLIENT_ID }}
+        tenant-id: ${{ secrets.ARM_TENANT_ID }}
+        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+    - name: Fetch Databricks Workspace URL
+      id: get-workspace
+      run: |
+        WORKSPACE_URL=$(az databricks workspace show --resource-group rg-dbx --name dbw-ecommerce --query workspaceUrl -o tsv)
+        echo "DATABRICKS_HOST=https://${WORKSPACE_URL}" >> $GITHUB_ENV
+
+    - name: Install Databricks CLI
+      uses: databricks/setup-cli@main
+
+    - name: Validate Bundle
+      run: databricks bundle validate
+
+    - name: Deploy Bundle
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: databricks bundle deploy
