@@ -1,0 +1,26 @@
+resources:
+  jobs:
+    trigger_raw_ingestion:
+      name: "Trigger Raw Ingestion on File Arrival"
+      trigger:
+        file_arrival:
+          url: /Volumes/${var.catalog}/raw/raw_vol/
+      tasks:
+        - task_key: run_raw_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_raw_pipeline.id}
+        - task_key: run_staging_pipeline
+          depends_on:
+            - task_key: run_raw_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_staging_pipeline.id}
+        - task_key: run_intermediate_pipeline
+          depends_on:
+            - task_key: run_staging_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_intermediate_pipeline.id}
+        - task_key: run_analytics_pipeline
+          depends_on:
+            - task_key: run_intermediate_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_analytics_pipeline.id}

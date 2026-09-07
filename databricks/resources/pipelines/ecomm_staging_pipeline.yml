@@ -1,0 +1,22 @@
+resources:
+  pipelines:
+    ecomm_staging_pipeline:
+      name: "E-Commerce Staging Pipeline"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ../../src/staging/customer.py
+        - file:
+            path: ../../src/staging/order.py
+        - file:
+            path: ../../src/staging/order_item.py
+        - file:
+            path: ../../src/staging/product.py
+        - file:
+            path: ../../src/staging/returns.py
+        - file:
+            path: ../../src/staging/return_item.py

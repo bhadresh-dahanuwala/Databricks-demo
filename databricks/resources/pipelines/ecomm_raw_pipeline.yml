@@ -1,0 +1,12 @@
+resources:
+  pipelines:
+    ecomm_raw_pipeline:
+      name: "E-Commerce Raw Ingestion Pipeline"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: raw
+      libraries:
+        - file:
+            path: ../../src/raw/generic_ingestion.py
