@@ -65,6 +65,8 @@ resources:
       libraries:
         - file:
             path: ./src/analytics/customer_contact_dim.py
+        - file:
+            path: ./src/analytics/customer_dim.py
 
   jobs:
     trigger_raw_ingestion:
