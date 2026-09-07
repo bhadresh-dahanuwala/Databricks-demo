@@ -35,6 +35,7 @@ def staging_product():
         dlt.read_stream("product_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("id"),
             col("name"),
             col("category"),
@@ -55,6 +56,7 @@ def staging_product_quarantine():
         dlt.read_stream("product_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )

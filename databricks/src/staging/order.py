@@ -38,6 +38,7 @@ def staging_order():
         dlt.read_stream("order_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("order_id"),
             col("order_timestamp"),
             col("customer_id"),
@@ -60,6 +61,7 @@ def staging_order_quarantine():
         dlt.read_stream("order_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )

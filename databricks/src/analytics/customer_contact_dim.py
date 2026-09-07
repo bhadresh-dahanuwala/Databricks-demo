@@ -1,10 +1,9 @@
 import dlt
-from pyspark.sql.functions import col, current_timestamp
+from pyspark.sql.functions import col
 
-# Add a processing timestamp so apply_changes has a sequence to order by
 @dlt.view
 def customer_contact_cdc():
-    return spark.readStream.table("ecomm.staging.customer_contact").withColumn("processing_time", current_timestamp())
+    return spark.readStream.table("ecomm.staging.customer_contact")
 
 # Define the target SCD table with an identity column for the integer surrogate key
 dlt.create_streaming_table(
@@ -14,7 +13,7 @@ dlt.create_streaming_table(
         customer_contact_key BIGINT GENERATED ALWAYS AS IDENTITY,
         customer_id INT,
         contact_number STRING,
-        processing_time TIMESTAMP,
+        source_date DATE,
         __START_AT TIMESTAMP,
         __END_AT TIMESTAMP,
         __ACTIVE BOOLEAN
@@ -26,6 +25,6 @@ dlt.apply_changes(
     target="customer_contact_dim",
     source="customer_contact_cdc",
     keys=["customer_id", "contact_number"],
-    sequence_by="processing_time",
+    sequence_by="source_date",
     stored_as_scd_type=2
 )
