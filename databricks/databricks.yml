@@ -98,6 +98,61 @@ resources:
         - file:
             path: ./src/staging/customer.py
 
+    order_staging_pipeline:
+      name: "Order Staging Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ./src/staging/order.py
+
+    order_item_staging_pipeline:
+      name: "Order Item Staging Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ./src/staging/order_item.py
+
+    returns_staging_pipeline:
+      name: "Returns Staging Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ./src/staging/returns.py
+
+    return_item_staging_pipeline:
+      name: "Return Item Staging Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ./src/staging/return_item.py
+
+    order_item_intermediate_pipeline:
+      name: "Order Item Intermediate Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: intermediate
+      libraries:
+        - file:
+            path: ./src/intermediate/order_item.sql
+
   jobs:
     trigger_raw_ingestion:
       name: "Trigger Raw Ingestion on File Arrival"
@@ -129,3 +184,30 @@ resources:
             - task_key: run_customer_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.customer_staging_pipeline.id}
+        - task_key: run_order_staging_pipeline
+          depends_on:
+            - task_key: run_order_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.order_staging_pipeline.id}
+        - task_key: run_order_item_staging_pipeline
+          depends_on:
+            - task_key: run_order_item_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.order_item_staging_pipeline.id}
+        - task_key: run_returns_staging_pipeline
+          depends_on:
+            - task_key: run_return_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.returns_staging_pipeline.id}
+        - task_key: run_return_item_staging_pipeline
+          depends_on:
+            - task_key: run_return_item_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.return_item_staging_pipeline.id}
+        - task_key: run_order_item_intermediate_pipeline
+          depends_on:
+            - task_key: run_order_staging_pipeline
+            - task_key: run_order_item_staging_pipeline
+            - task_key: run_product_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.order_item_intermediate_pipeline.id}
