@@ -1,34 +1,37 @@
 import dlt
 from pyspark.sql.functions import col, regexp_extract, to_date
 
-# Read the dynamic parameter passed by the DLT pipeline configuration
-entity = spark.conf.get("entity_name")
 VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
+ENTITIES = ["customer", "product", "order", "order_item", "return", "return_item"]
 
+def generate_raw_table(entity_name):
+    @dlt.table(
+        name=entity_name,
+        comment=f"Raw {entity_name} data ingested incrementally using Auto Loader. "
+                 f"Schema/types are auto-inferred and evolve over time; the "
+                 f"staging layer enforces the actual expected contract "
+                 f"(mandatory columns, expected types) independently of "
+                 f"whatever gets inferred here."
+    )
+    def raw_ingestion():
+        df = (
+            spark.readStream.format("cloudFiles")
+            .option("cloudFiles.format", "json")
+            .option("multiLine", "true")  # supports pretty-printed, multi-line records
+            .option("cloudFiles.schemaEvolutionMode", "rescue")
+            # Infer schema and evolve it if it changes
+            .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_{entity_name}")
+            .option("cloudFiles.inferColumnTypes", "true")
+            # Matches files like customers.json, products.json, etc.
+            .option("pathGlobFilter", f"{entity_name}s.json")
+            .load(VOLUME_PATH)
+        )
+        
+        return df.withColumn(
+            "source_date", 
+            to_date(regexp_extract(col("_metadata.file_path"), r"/(\d{8})/", 1), "yyyyMMdd")
+        )
 
-@dlt.table(
-    name=f"{entity}",
-    comment=f"Raw {entity} data ingested incrementally using Auto Loader. "
-             f"Schema/types are auto-inferred and evolve over time; the "
-             f"staging layer enforces the actual expected contract "
-             f"(mandatory columns, expected types) independently of "
-             f"whatever gets inferred here."
-)
-def raw_ingestion():
-    df = (
-        spark.readStream.format("cloudFiles")
-        .option("cloudFiles.format", "json")
-        .option("multiLine", "true")  # supports pretty-printed, multi-line records
-        .option("cloudFiles.schemaEvolutionMode", "rescue")
-        # Infer schema and evolve it if it changes
-        .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_{entity}")
-        .option("cloudFiles.inferColumnTypes", "true")
-        # Matches files like customers.json, products.json, etc.
-        .option("pathGlobFilter", f"{entity}s.json")
-        .load(VOLUME_PATH)
-    )
-    
-    return df.withColumn(
-        "source_date", 
-        to_date(regexp_extract(col("_metadata.file_path"), r"/(\d{8})/", 1), "yyyyMMdd")
-    )
+# Register all entities dynamically
+for entity in ENTITIES:
+    generate_raw_table(entity)
