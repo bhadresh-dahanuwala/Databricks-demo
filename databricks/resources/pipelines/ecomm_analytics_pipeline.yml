@@ -1,0 +1,14 @@
+resources:
+  pipelines:
+    ecomm_analytics_pipeline:
+      name: "E-Commerce Analytics Pipeline"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: analytics
+      libraries:
+        - file:
+            path: ../../src/analytics/customer_contact_dim.py
+        - file:
+            path: ../../src/analytics/customer_dim.py
