@@ -1,5 +1,4 @@
 import dlt
-from pyspark.sql.functions import col
 
 @dlt.view
 def customer_contact_cdc():
@@ -25,6 +24,8 @@ dlt.apply_changes(
     target="customer_contact_dim",
     source="customer_contact_cdc",
     keys=["customer_id", "contact_number"],
+    # track_history_column_list=["contact_number", "email_address"]
+    # track_history_except_column_list=["last_login_date", "updated_at"]
     sequence_by="source_date",
     stored_as_scd_type=2
 )
