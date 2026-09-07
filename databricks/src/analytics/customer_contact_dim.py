@@ -16,7 +16,7 @@ dlt.create_streaming_table(
         source_date DATE,
         __START_AT DATE,
         __END_AT DATE,
-        __ACTIVE BOOLEAN
+        __ACTIVE BOOLEAN GENERATED ALWAYS AS (__END_AT IS NULL)
     """
 )
 
