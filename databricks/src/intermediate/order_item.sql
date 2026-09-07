@@ -7,8 +7,8 @@ SELECT
   oi.quantity,
   (p.price * oi.quantity) AS gross_amount,
   (p.price * oi.quantity) * (1 - (COALESCE(o.discount_percentage, 0) / 100)) AS net_amount
-FROM live.order_item oi
-LEFT JOIN live.product p 
+FROM ecomm.staging.order_item oi
+LEFT JOIN ecomm.staging.product p 
   ON oi.product_id = p.id
-LEFT JOIN live.order o 
+LEFT JOIN ecomm.staging.order o 
   ON oi.order_id = o.order_id
