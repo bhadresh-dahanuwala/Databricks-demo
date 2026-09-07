@@ -33,6 +33,7 @@ def staging_returns():
         dlt.read_stream("returns_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("order_id"),
             col("return_request_timestamp"),
             col("return_reason"),
@@ -51,6 +52,7 @@ def staging_returns_quarantine():
         dlt.read_stream("returns_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )

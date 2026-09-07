@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, regexp_extract, to_date
 
 # Read the dynamic parameter passed by the DLT pipeline configuration
 entity = spark.conf.get("entity_name")
@@ -15,7 +15,7 @@ VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
              f"whatever gets inferred here."
 )
 def raw_ingestion():
-    return (
+    df = (
         spark.readStream.format("cloudFiles")
         .option("cloudFiles.format", "json")
         .option("multiLine", "true")  # supports pretty-printed, multi-line records
@@ -26,4 +26,9 @@ def raw_ingestion():
         # Matches files like customers.json, products.json, etc.
         .option("pathGlobFilter", f"{entity}s.json")
         .load(VOLUME_PATH)
+    )
+    
+    return df.withColumn(
+        "source_date", 
+        to_date(regexp_extract(col("_metadata.file_path"), r"/(\d{8})/", 1), "yyyyMMdd")
     )

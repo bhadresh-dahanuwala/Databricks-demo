@@ -65,6 +65,7 @@ def staging_customer():
         dlt.read_stream("customer_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("customer_id"),
             col("first_name"),
             col("last_name")
@@ -82,6 +83,7 @@ def staging_customer_quarantine():
         dlt.read_stream("customer_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )
@@ -112,6 +114,7 @@ def staging_customer_contact():
         dlt.read_stream("customer_contact_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("customer_id"),
             explode(col("contact_numbers")).alias("contact_number")
         )
@@ -126,6 +129,7 @@ def staging_customer_contact_quarantine():
         dlt.read_stream("customer_contact_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )
@@ -156,10 +160,12 @@ def staging_customer_address():
         dlt.read_stream("customer_address_parsed")
         .filter("_is_invalid = false")
         .select(
+            col("source_date"),
             col("customer_id"),
             explode(col("addresses")).alias("address")
         )
         .select(
+            col("source_date"),
             col("customer_id"),
             col("address.address_type"),
             col("address.line_1"),
@@ -179,6 +185,7 @@ def staging_customer_address_quarantine():
         dlt.read_stream("customer_address_parsed")
         .filter("_is_invalid = true")
         .select(
+            col("source_date"),
             to_json(struct("*")).alias("raw_record"),
             current_timestamp().alias("quarantined_at"),
         )
