@@ -75,7 +75,7 @@ tables:
       # would otherwise incorrectly collide to one address_key
       primary: [line_1, line_2, zip]
 
-  - name: customer_address_dim
+  - name: customer_address_bridge
     type: dimension (type 2)
     description: >
       Historized relationship between a customer and an address. Adds
@@ -88,8 +88,8 @@ tables:
     columns:
       - name: customer_address_key
       - name: customer_id            # durable FK to customer_dim (natural key)
-      - name: address_key            # FK to address_dim
       - name: address_type           # 'Home' / 'Work' — added, was missing
+      - name: address_key            # FK to address_dim
       - name: __START_AT
       - name: __END_AT
       - name: __ACTIVE
