@@ -1,0 +1,66 @@
+tables:
+  - name: order_items
+    description: >
+      Enriched order line items. Joins staging.order_item with staging.order (for header context 
+      like discount and timestamps) and staging.product (for unit_price) to pre-calculate financial 
+      measures before loading the accumulating snapshot fact table in the analytics layer.
+    columns:
+      - name: order_id
+        type: integer
+      - name: product_id
+        type: integer
+      - name: customer_id
+        type: integer
+      - name: order_timestamp
+        type: timestamp
+      - name: shipping_label
+        type: string
+      - name: quantity
+        type: integer
+      - name: unit_price
+        type: float
+      - name: discount_percentage
+        type: float
+      - name: gross_amount
+        type: float
+        description: Calculated as (quantity * unit_price)
+      - name: net_amount
+        type: float
+        description: Calculated as gross_amount - (gross_amount * (discount_percentage / 100))
+    primary_key: [order_id, product_id]
+
+  - name: return_items
+    description: >
+      Enriched return line items. Joins staging.return_item with staging.returns to bring header-level
+      return timestamps and reasons down to the line-item grain for the return fact table.
+    columns:
+      - name: order_id
+        type: integer
+      - name: product_id
+        type: integer
+      - name: return_request_timestamp
+        type: timestamp
+      - name: return_reason
+        type: string
+      - name: quantity
+        type: integer
+      - name: quantity_received
+        type: integer
+    primary_key: [order_id, product_id]
+
+  - name: addresses
+    description: >
+      Deduplicated list of physical addresses extracted from staging.customer_address. 
+      This is required to cleanly build the conformed address_dim (Type 1) in the analytics layer.
+    columns:
+      - name: line_1
+        type: string
+      - name: line_2
+        type: string
+      - name: city
+        type: string
+      - name: state
+        type: string
+      - name: zip
+        type: string
+    primary_key: [line_1, line_2, zip]
