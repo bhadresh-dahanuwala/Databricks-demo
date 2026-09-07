@@ -11,7 +11,7 @@ RETURN_SCHEMA = {
 
 @dlt.view(name="returns_parsed")
 def returns_parsed():
-    df = spark.readStream.table("ecomm.raw.returns")
+    df = spark.readStream.table("ecomm.raw.return")
     df = pad_missing_columns(df, RETURN_SCHEMA)
 
     is_invalid = None
