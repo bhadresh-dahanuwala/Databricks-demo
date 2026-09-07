@@ -10,7 +10,7 @@ dlt.create_streaming_table(
     schema="""
         customer_key BIGINT GENERATED ALWAYS AS IDENTITY,
         customer_id INT,
-        customer_first_name STRING,
+        first_name STRING,
         last_name STRING,
         source_date DATE,
         __START_DATE DATE,
