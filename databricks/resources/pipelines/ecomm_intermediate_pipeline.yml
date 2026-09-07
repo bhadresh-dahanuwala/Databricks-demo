@@ -9,8 +9,6 @@ resources:
       schema: intermediate
       libraries:
         - file:
-            path: ../../src/intermediate/addresses.py
-        - file:
             path: ../../src/intermediate/order_items.py
         - file:
             path: ../../src/intermediate/return_items.py
