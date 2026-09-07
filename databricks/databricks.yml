@@ -153,8 +153,8 @@ resources:
         - file:
             path: ./src/staging/product.py
 
-    order_item_intermediate_pipeline:
-      name: "Order Item Intermediate Transformation"
+    order_items_intermediate_pipeline:
+      name: "Order Items Intermediate Transformation"
       serverless: true
       development: true
       continuous: false
@@ -162,7 +162,29 @@ resources:
       schema: intermediate
       libraries:
         - file:
-            path: ./src/intermediate/order_item.sql
+            path: ./src/intermediate/order_items.py
+
+    return_items_intermediate_pipeline:
+      name: "Return Items Intermediate Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: intermediate
+      libraries:
+        - file:
+            path: ./src/intermediate/return_items.py
+
+    addresses_intermediate_pipeline:
+      name: "Addresses Intermediate Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: intermediate
+      libraries:
+        - file:
+            path: ./src/intermediate/addresses.py
 
   jobs:
     trigger_raw_ingestion:
@@ -220,10 +242,21 @@ resources:
             - task_key: run_product_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.product_staging_pipeline.id}
-        - task_key: run_order_item_intermediate_pipeline
+        - task_key: run_order_items_intermediate_pipeline
           depends_on:
             - task_key: run_order_staging_pipeline
             - task_key: run_order_item_staging_pipeline
             - task_key: run_product_staging_pipeline
           pipeline_task:
-            pipeline_id: ${resources.pipelines.order_item_intermediate_pipeline.id}
+            pipeline_id: ${resources.pipelines.order_items_intermediate_pipeline.id}
+        - task_key: run_return_items_intermediate_pipeline
+          depends_on:
+            - task_key: run_returns_staging_pipeline
+            - task_key: run_return_item_staging_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.return_items_intermediate_pipeline.id}
+        - task_key: run_addresses_intermediate_pipeline
+          depends_on:
+            - task_key: run_customer_staging_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.addresses_intermediate_pipeline.id}
