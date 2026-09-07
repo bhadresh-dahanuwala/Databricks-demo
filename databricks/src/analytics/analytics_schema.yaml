@@ -46,14 +46,14 @@ tables:
       - name: customer_contact_key   # surrogate key — added; use this in fact joins
       - name: customer_id            # durable FK to customer_dim (natural key)
       - name: contact_number
-      - name: start_date
-      - name: end_date
-      - name: active
+      - name: __START_AT
+      - name: __END_AT
+      - name: __ACTIVE
     keys:
       surrogate: customer_contact_key
       # start_date included so a number can be deactivated and later
       # reassigned/reactivated to the same customer without a key collision
-      primary: [customer_id, start_date]
+      primary: [customer_id, __START_AT]
 
   - name: address_dim
     type: dimension (type 1)
@@ -90,14 +90,14 @@ tables:
       - name: customer_id            # durable FK to customer_dim (natural key)
       - name: address_key            # FK to address_dim
       - name: address_type           # 'Home' / 'Work' — added, was missing
-      - name: start_date
-      - name: end_date
-      - name: active
+      - name: __START_AT
+      - name: __END_AT
+      - name: __ACTIVE
     keys:
       surrogate: customer_address_key
       # start_date included so a customer can move away from and later
       # return to the same address (per type) without a key collision
-      primary: [customer_id, address_type, start_date]
+      primary: [customer_id, address_type, __START_AT]
 
   - name: product_dim
     type: dimension (type 1)
@@ -188,12 +188,12 @@ tables:
       - name: order_status_key
       - name: order_id
       - name: order_status
-      - name: start_date
-      - name: end_date
-      - name: active
+      - name: __START_AT
+      - name: __END_AT
+      - name: __ACTIVE
     keys:
       surrogate: order_status_key
-      primary: [order_id, start_date]
+      primary: [order_id, __START_AT]
 
   - name: order_item_fct
     type: fact (accumulating snapshot)
