@@ -2,7 +2,10 @@ import dlt
 
 @dlt.view
 def address_cdc():
-    return spark.readStream.table("ecomm.staging.customer_address")
+    return (
+        spark.readStream.table("ecomm.staging.customer_address")
+        .select("line_1", "line_2", "city", "state", "zip", "source_date")
+    )
 
 dlt.create_streaming_table(
     name="address_dim",
@@ -13,7 +16,8 @@ dlt.create_streaming_table(
         line_2          STRING,
         city            STRING,
         state           STRING,
-        zip             STRING
+        zip             STRING,
+        source_date     DATE
     """
 )
 
