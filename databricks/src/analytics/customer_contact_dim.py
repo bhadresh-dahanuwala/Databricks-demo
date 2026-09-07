@@ -13,6 +13,7 @@ dlt.create_streaming_table(
         customer_contact_key BIGINT GENERATED ALWAYS AS IDENTITY,
         customer_id INT,
         contact_number STRING,
+        processing_time TIMESTAMP,
         __START_AT TIMESTAMP,
         __END_AT TIMESTAMP,
         __ACTIVE BOOLEAN
