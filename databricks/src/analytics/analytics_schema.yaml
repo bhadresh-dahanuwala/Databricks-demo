@@ -1,0 +1,249 @@
+# Corrected star schema for customer dimensional model.
+# Design pattern: a stable "durable key" identifies the customer across all time.
+# Attributes that must retain history (contact number, address) live in their
+# OWN Type 2 dimensions, each with its own surrogate key, rather than being
+# folded into customer_dim or modeled as a bridge table.
+#
+# IMPORTANT: customer_contact_dim and customer_address_dim reference customer_id
+# (the natural/business key), NOT customer_key (the surrogate key on customer_dim).
+# customer_key is only safe to use as an FK today because customer_dim is Type 1
+# (one row per customer). If customer_dim ever becomes Type 2, customer_key would
+# start versioning per change, so a single customer would map to multiple
+# customer_key values over time — any FK pinned to it would silently anchor to
+# one historical slice instead of the customer as a whole. customer_id never
+# changes identity regardless of how customer_dim is typed, so it's the correct
+# durable key to hang other Type 2 dimensions off of.
+#
+# A fact table would join to customer_contact_dim / customer_address_dim using
+# THEIR surrogate keys (to get the version that was active as of the fact's date),
+# not directly to customer_dim.
+
+tables:
+  - name: customer_dim
+    type: dimension (type 1)
+    description: >
+      Core, slowly-changing-at-most-rarely identity attributes. No history
+      required per requirements, so Type 1 (overwrite) is correct here.
+    columns:
+      - name: customer_key
+      - name: customer_id
+      - name: first_name
+      - name: last_name
+    keys:
+      surrogate: customer_key
+      primary: [customer_id]
+
+  - name: customer_contact_dim
+    type: dimension (type 2)
+    description: >
+      Historized contact number. Was previously an untyped "bridge" table with
+      no surrogate key; a bridge is for many-to-many fact allocations, which
+      doesn't apply here — this is a single-valued attribute of the customer
+      that changes over time, so Type 2 SCD is the correct pattern.
+      customer_id (not customer_key) is used as the durable FK to customer_dim,
+      since it stays stable even if customer_dim later becomes Type 2.
+    columns:
+      - name: customer_contact_key   # surrogate key — added; use this in fact joins
+      - name: customer_id            # durable FK to customer_dim (natural key)
+      - name: contact_number
+      - name: start_date
+      - name: end_date
+      - name: active
+    keys:
+      surrogate: customer_contact_key
+      # start_date included so a number can be deactivated and later
+      # reassigned/reactivated to the same customer without a key collision
+      primary: [customer_id, start_date]
+
+  - name: address_dim
+    type: dimension (type 1)
+    description: >
+      Conformed, deduplicated physical location. A given address's own
+      attributes (city/state/zip) don't change, so Type 1 is correct — the
+      same address_key can be reused across multiple customers and across
+      multiple time periods for the same customer.
+    columns:
+      - name: address_key
+      - name: line_1
+      - name: line_2
+      - name: city
+      - name: state
+      - name: zip
+    keys:
+      surrogate: address_key
+      # line_2 added: two units at the same street/zip (e.g. Apt 1 vs Apt 2)
+      # would otherwise incorrectly collide to one address_key
+      primary: [line_1, line_2, zip]
+
+  - name: customer_address_dim
+    type: dimension (type 2)
+    description: >
+      Historized relationship between a customer and an address. Adds
+      address_type (Home/Work), which existed in the source data but was
+      dropped in the original design. address_type is part of the key so a
+      customer can have an active Home address and an active Work address
+      concurrently, each independently versioned.
+      customer_id (not customer_key) is used as the durable FK to customer_dim,
+      since it stays stable even if customer_dim later becomes Type 2.
+    columns:
+      - name: customer_address_key
+      - name: customer_id            # durable FK to customer_dim (natural key)
+      - name: address_key            # FK to address_dim
+      - name: address_type           # 'Home' / 'Work' — added, was missing
+      - name: start_date
+      - name: end_date
+      - name: active
+    keys:
+      surrogate: customer_address_key
+      # start_date included so a customer can move away from and later
+      # return to the same address (per type) without a key collision
+      primary: [customer_id, address_type, start_date]
+
+  - name: product_dim
+    type: dimension (type 1)
+    description: >
+      Descriptive product attributes. Cost, price, and stock live in
+      product_daily_snapshot_fct below. product_category is treated as
+      non-historized (overwrite in place), so Type 1 is correct — no
+      start_date/end_date/active needed since there's only ever one row
+      per product.
+    columns:
+      - name: product_key
+      - name: product_id
+      - name: product_category
+    keys:
+      surrogate: product_key
+      primary: [product_id]
+
+  - name: date_dim
+    type: dimension (static/type 0)
+    description: >
+      Standard conformed date dimension, one row per calendar day. Static —
+      generated once and never changes — so it's used as the shared time axis
+      for product_daily_snapshot_fct (and any future fact tables) rather than
+      relying on raw dates, giving cheap access to calendar attributes like
+      month/quarter/weekday without date arithmetic in every query.
+    columns:
+      - name: date_key            # surrogate, typically YYYYMMDD integer
+      - name: full_date
+      - name: day_of_week
+      - name: day_of_month
+      - name: month
+      - name: month_name
+      - name: quarter
+      - name: year
+      - name: is_weekend
+    keys:
+      surrogate: date_key
+      primary: [full_date]
+
+  - name: product_daily_snapshot_fct
+    type: fact (periodic snapshot)
+    description: >
+      Replaces product_stock_dim, and pulls product_cost/product_price out of
+      product_dim. Stock, cost, and price are all measures sampled at the same
+      grain (one row per product per day), so they belong together in a
+      periodic snapshot fact rather than as dimension attributes:
+        - stock_quantity is semi-additive (sums across products on a given
+          day, but not summable across days — you'd take latest/average).
+        - unit_cost / unit_price are inputs to computed measures (margin =
+          unit_price - unit_cost) that only make sense aggregated/trended
+          over date and product, which is a fact table's job.
+      product_key is the FK into product_dim (now Type 1, so it's a direct
+      1:1 reference rather than an "as of date" version lookup). date_key is
+      the FK into date_dim.
+      ASSUMPTION: single location/warehouse. If stock is tracked per
+      store/warehouse, add a store_key to the grain and primary key below.
+    columns:
+      - name: date_key             # FK to date_dim
+      - name: product_key          # FK to product_dim
+      - name: product_id           # durable reference, for convenience
+      - name: stock_quantity       # semi-additive measure
+      - name: unit_cost
+      - name: unit_price
+    keys:
+      primary: [product_id, date_key]
+
+  - name: order_dim
+    type: dimension (type 1)
+    description: >
+      Holds the attributes that are fixed at order creation.
+    columns:
+      - name: order_key
+      - name: order_id
+      - name: order_timestamp
+      - name: customer_id
+      - name: order_mode # Phone, Online
+      - name: return_windows_days
+      - name: discount_percentage
+    keys:
+      surrogate: order_key
+      primary: [order_id]
+
+  - name: order_status_dim
+    type: dimension (type 2)
+    description: >
+      Tracks status transitions over time, keyed by durable order_id.
+    columns:
+      - name: order_status_key
+      - name: order_id
+      - name: order_status
+      - name: start_date
+      - name: end_date
+      - name: active
+    keys:
+      surrogate: order_status_key
+      primary: [order_id, start_date]
+
+  - name: order_item_fct
+    type: fact (accumulating snapshot)
+    description: >
+      Fact table for order line items. Updates as the order moves through fulfillment.
+    columns:
+      - name: order_item_key     # Surrogate key
+      - name: order_id
+      - name: product_id
+      - name: order_date_key     # FK to date_dim (Populated at checkout)
+      - name: ship_date_key      # FK to date_dim (Starts NULL, updated at shipping)
+      - name: order_key
+      - name: product_key
+      - name: customer_key
+      - name: shipping_label     # Degenerate dimension (Starts NULL)
+      - name: quantity
+      - name: gross_amount       # quantity * product unit price
+      - name: net_amount         # (quantity * product unit price) - discount
+      - name: days_to_ship       # Calculated lag measure
+    keys:
+      surrogate: order_item_key
+      primary: [order_id, product_id]
+
+  - name: order_return_dim
+    type: dimension (type 1)
+    description: >
+      Captures fixed context about the return event.
+    columns:
+      - name: order_return_key
+      - name: order_id
+      - name: return_reason
+    keys:
+      surrogate: order_return_key
+      primary: [order_id]
+
+  - name: return_item_fct
+    type: fact
+    description: >
+      Fact table for return line items. Joins to order_dim for original context and order_return_dim for return context.
+    columns:
+      - name: return_item_key    # Surrogate key
+      - name: order_id
+      - name: product_id
+      - name: return_request_date_key   # FK to date_dim
+      - name: return_received_date_key  # FK to date_dim
+      - name: order_key                 # FK to order_dim
+      - name: order_return_key          # FK to order_return_dim
+      - name: product_key               # FK to product_dim
+      - name: quantity
+      - name: quantity_received
+    keys:
+      surrogate: return_item_key
+      primary: [order_id, product_id]
