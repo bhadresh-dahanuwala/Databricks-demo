@@ -8,7 +8,8 @@ def customer_contact_cdc():
 
 # Define the target SCD table with an identity column for the integer surrogate key
 dlt.create_streaming_table(
-    name="customer_contact_dim_scd",
+    name="customer_contact_dim",
+    comment="Final Type 2 Dimension for Customer Contacts",
     schema="""
         customer_contact_key BIGINT GENERATED ALWAYS AS IDENTITY,
         customer_id INT,
@@ -22,24 +23,9 @@ dlt.create_streaming_table(
 
 # Use Databricks DLT native SCD Type 2 handling
 dlt.apply_changes(
-    target="customer_contact_dim_scd",
+    target="customer_contact_dim",
     source="customer_contact_cdc",
     keys=["customer_id", "contact_number"],
     sequence_by="processing_time",
     stored_as_scd_type=2
 )
-
-# Expose a final view that renames the DLT internal tracking columns to match your analytics schema
-@dlt.view(
-    name="customer_contact_dim",
-    comment="Final Type 2 Dimension for Customer Contacts"
-)
-def customer_contact_dim():
-    return dlt.read("customer_contact_dim_scd").select(
-        col("customer_contact_key"),
-        col("customer_id"),
-        col("contact_number"),
-        col("__START_AT").alias("start_date"),
-        col("__END_AT").alias("end_date"),
-        col("__ACTIVE").alias("active")
-    )
