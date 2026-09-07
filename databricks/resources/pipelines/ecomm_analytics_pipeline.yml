@@ -12,3 +12,5 @@ resources:
             path: ../../src/analytics/customer_contact_dim.py
         - file:
             path: ../../src/analytics/customer_dim.py
+        - file:
+            path: ../../src/analytics/address_dim.py
