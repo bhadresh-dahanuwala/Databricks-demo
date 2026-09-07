@@ -1,278 +1,268 @@
 bundle:
   name: ecomm_bundle
-
 variables:
   catalog:
     description: Catalog name
     default: ecomm
-
 resources:
   pipelines:
     customer_raw_pipeline:
-      name: "Customer Raw Ingestion"
+      name: Customer Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "customer"
+        entity_name: customer
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
+      - file:
+          path: ./src/raw/generic_ingestion.py
     product_raw_pipeline:
-      name: "Product Raw Ingestion"
+      name: Product Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "product"
+        entity_name: product
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
+      - file:
+          path: ./src/raw/generic_ingestion.py
     order_raw_pipeline:
-      name: "Order Raw Ingestion"
+      name: Order Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "order"
+        entity_name: order
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
+      - file:
+          path: ./src/raw/generic_ingestion.py
     order_item_raw_pipeline:
-      name: "Order Item Raw Ingestion"
+      name: Order Item Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "order_item"
+        entity_name: order_item
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
+      - file:
+          path: ./src/raw/generic_ingestion.py
     return_raw_pipeline:
-      name: "Return Raw Ingestion"
+      name: Return Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "return"
+        entity_name: return
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
+      - file:
+          path: ./src/raw/generic_ingestion.py
     return_item_raw_pipeline:
-      name: "Return Item Raw Ingestion"
+      name: Return Item Raw Ingestion
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: raw
       configuration:
-        entity_name: "return_item"
+        entity_name: return_item
       libraries:
-        - file:
-            path: ./src/raw/generic_ingestion.py
-
-    # --- New: staging pipeline applying the explicit schema contract -------
+      - file:
+          path: ./src/raw/generic_ingestion.py
     customer_staging_pipeline:
-      name: "Customer Staging Transformation"
+      name: Customer Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/customer.py
-
+      - file:
+          path: ./src/staging/customer.py
     order_staging_pipeline:
-      name: "Order Staging Transformation"
+      name: Order Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/order.py
-
+      - file:
+          path: ./src/staging/order.py
     order_item_staging_pipeline:
-      name: "Order Item Staging Transformation"
+      name: Order Item Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/order_item.py
-
+      - file:
+          path: ./src/staging/order_item.py
     returns_staging_pipeline:
-      name: "Returns Staging Transformation"
+      name: Returns Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/returns.py
-
+      - file:
+          path: ./src/staging/returns.py
     return_item_staging_pipeline:
-      name: "Return Item Staging Transformation"
+      name: Return Item Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/return_item.py
-
+      - file:
+          path: ./src/staging/return_item.py
     product_staging_pipeline:
-      name: "Product Staging Transformation"
+      name: Product Staging Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: staging
       libraries:
-        - file:
-            path: ./src/staging/product.py
-
+      - file:
+          path: ./src/staging/product.py
     order_items_intermediate_pipeline:
-      name: "Order Items Intermediate Transformation"
+      name: Order Items Intermediate Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: intermediate
       libraries:
-        - file:
-            path: ./src/intermediate/order_items.py
-
+      - file:
+          path: ./src/intermediate/order_items.py
     return_items_intermediate_pipeline:
-      name: "Return Items Intermediate Transformation"
+      name: Return Items Intermediate Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: intermediate
       libraries:
-        - file:
-            path: ./src/intermediate/return_items.py
-
+      - file:
+          path: ./src/intermediate/return_items.py
     addresses_intermediate_pipeline:
-      name: "Addresses Intermediate Transformation"
+      name: Addresses Intermediate Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: intermediate
       libraries:
-        - file:
-            path: ./src/intermediate/addresses.py
-
+      - file:
+          path: ./src/intermediate/addresses.py
     customer_contact_dim_pipeline:
-      name: "Customer Contact Dim Transformation"
+      name: Customer Contact Dim Transformation
       serverless: true
       development: true
       continuous: false
       catalog: ${var.catalog}
       schema: analytics
       libraries:
-        - file:
-            path: ./src/analytics/customer_contact_dim.py
-
+      - file:
+          path: ./src/analytics/customer_contact_dim.py
   jobs:
     trigger_raw_ingestion:
-      name: "Trigger Raw Ingestion on File Arrival"
+      name: Trigger Raw Ingestion on File Arrival
       trigger:
         file_arrival:
           url: /Volumes/${var.catalog}/raw/raw_vol/
       tasks:
+      - task_key: run_customer_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.customer_raw_pipeline.id}
+      - task_key: run_product_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.product_raw_pipeline.id}
+      - task_key: run_order_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.order_raw_pipeline.id}
+      - task_key: run_order_item_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.order_item_raw_pipeline.id}
+      - task_key: run_return_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.return_raw_pipeline.id}
+      - task_key: run_return_item_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.return_item_raw_pipeline.id}
+      - task_key: run_customer_staging_pipeline
+        depends_on:
         - task_key: run_customer_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.customer_raw_pipeline.id}
-        - task_key: run_product_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.product_raw_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.customer_staging_pipeline.id}
+      - task_key: run_order_staging_pipeline
+        depends_on:
         - task_key: run_order_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.order_raw_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.order_staging_pipeline.id}
+      - task_key: run_order_item_staging_pipeline
+        depends_on:
         - task_key: run_order_item_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.order_item_raw_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.order_item_staging_pipeline.id}
+      - task_key: run_returns_staging_pipeline
+        depends_on:
         - task_key: run_return_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.return_raw_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.returns_staging_pipeline.id}
+      - task_key: run_return_item_staging_pipeline
+        depends_on:
         - task_key: run_return_item_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.return_item_raw_pipeline.id}
-        # New: run customer staging only after customer raw ingestion succeeds
-        - task_key: run_customer_staging_pipeline
-          depends_on:
-            - task_key: run_customer_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.customer_staging_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.return_item_staging_pipeline.id}
+      - task_key: run_product_staging_pipeline
+        depends_on:
+        - task_key: run_product_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.product_staging_pipeline.id}
+      - task_key: run_order_items_intermediate_pipeline
+        depends_on:
         - task_key: run_order_staging_pipeline
-          depends_on:
-            - task_key: run_order_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.order_staging_pipeline.id}
         - task_key: run_order_item_staging_pipeline
-          depends_on:
-            - task_key: run_order_item_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.order_item_staging_pipeline.id}
-        - task_key: run_returns_staging_pipeline
-          depends_on:
-            - task_key: run_return_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.returns_staging_pipeline.id}
-        - task_key: run_return_item_staging_pipeline
-          depends_on:
-            - task_key: run_return_item_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.return_item_staging_pipeline.id}
         - task_key: run_product_staging_pipeline
-          depends_on:
-            - task_key: run_product_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.product_staging_pipeline.id}
-        - task_key: run_order_items_intermediate_pipeline
-          depends_on:
-            - task_key: run_order_staging_pipeline
-            - task_key: run_order_item_staging_pipeline
-            - task_key: run_product_staging_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.order_items_intermediate_pipeline.id}
-        - task_key: run_return_items_intermediate_pipeline
-          depends_on:
-            - task_key: run_returns_staging_pipeline
-            - task_key: run_return_item_staging_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.return_items_intermediate_pipeline.id}
-        - task_key: run_addresses_intermediate_pipeline
-          depends_on:
-            - task_key: run_customer_staging_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.addresses_intermediate_pipeline.id}
-        - task_key: run_customer_contact_dim_pipeline
-          depends_on:
-            - task_key: run_customer_staging_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.customer_contact_dim_pipeline.id}
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.order_items_intermediate_pipeline.id}
+      - task_key: run_return_items_intermediate_pipeline
+        depends_on:
+        - task_key: run_returns_staging_pipeline
+        - task_key: run_return_item_staging_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.return_items_intermediate_pipeline.id}
+      - task_key: run_addresses_intermediate_pipeline
+        depends_on:
+        - task_key: run_customer_staging_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.addresses_intermediate_pipeline.id}
+      - task_key: run_customer_contact_dim_pipeline
+        depends_on:
+        - task_key: run_customer_staging_pipeline
+        pipeline_task:
+          pipeline_id: ${resources.pipelines.customer_contact_dim_pipeline.id}
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405607261385651.11.azuredatabricks.net
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405607261385651.11.azuredatabricks.net
