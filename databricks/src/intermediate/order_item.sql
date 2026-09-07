@@ -6,7 +6,7 @@ SELECT
   oi.product_id,
   oi.quantity,
   (p.price * oi.quantity) AS gross_amount,
-  (p.price * oi.quantity) * (COALESCE(o.discount_percentage, 0) / 100) AS net_amount
+  (p.price * oi.quantity) * (1 - (COALESCE(o.discount_percentage, 0) / 100)) AS net_amount
 FROM live.order_item oi
 LEFT JOIN live.product p 
   ON oi.product_id = p.id
