@@ -186,6 +186,17 @@ resources:
         - file:
             path: ./src/intermediate/addresses.py
 
+    customer_contact_dim_pipeline:
+      name: "Customer Contact Dim Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: analytics
+      libraries:
+        - file:
+            path: ./src/analytics/customer_contact_dim.py
+
   jobs:
     trigger_raw_ingestion:
       name: "Trigger Raw Ingestion on File Arrival"
@@ -260,3 +271,8 @@ resources:
             - task_key: run_customer_staging_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.addresses_intermediate_pipeline.id}
+        - task_key: run_customer_contact_dim_pipeline
+          depends_on:
+            - task_key: run_customer_staging_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.customer_contact_dim_pipeline.id}
