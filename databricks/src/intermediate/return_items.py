@@ -6,8 +6,8 @@ from pyspark.sql.functions import col
     comment="Enriched return line items with header-level timestamps and reasons."
 )
 def intermediate_return_items():
-    return_item = dlt.read("return_item")
-    returns = dlt.read("returns")
+    return_item = spark.table("ecomm.staging.return_item")
+    returns = spark.table("ecomm.staging.returns")
     
     return (
         return_item.alias("ri")

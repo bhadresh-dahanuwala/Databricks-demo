@@ -6,9 +6,9 @@ from pyspark.sql.functions import col
     comment="Enriched order line items with pre-calculated financial measures."
 )
 def intermediate_order_items():
-    order_item = dlt.read("order_item")
-    order = dlt.read("order")
-    product = dlt.read("product")
+    order_item = spark.table("ecomm.staging.order_item")
+    order = spark.table("ecomm.staging.order")
+    product = spark.table("ecomm.staging.product")
     
     return (
         order_item.alias("oi")

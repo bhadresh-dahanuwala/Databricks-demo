@@ -6,7 +6,7 @@ from pyspark.sql.functions import col
     comment="Deduplicated list of physical addresses for the conformed dimension."
 )
 def intermediate_addresses():
-    customer_address = dlt.read("customer_address")
+    customer_address = spark.table("ecomm.staging.customer_address")
     
     return (
         customer_address
