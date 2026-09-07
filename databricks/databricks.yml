@@ -142,6 +142,17 @@ resources:
         - file:
             path: ./src/staging/return_item.py
 
+    product_staging_pipeline:
+      name: "Product Staging Transformation"
+      serverless: true
+      development: true
+      continuous: false
+      catalog: ${var.catalog}
+      schema: staging
+      libraries:
+        - file:
+            path: ./src/staging/product.py
+
     order_item_intermediate_pipeline:
       name: "Order Item Intermediate Transformation"
       serverless: true
@@ -204,10 +215,15 @@ resources:
             - task_key: run_return_item_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.return_item_staging_pipeline.id}
+        - task_key: run_product_staging_pipeline
+          depends_on:
+            - task_key: run_product_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.product_staging_pipeline.id}
         - task_key: run_order_item_intermediate_pipeline
           depends_on:
             - task_key: run_order_staging_pipeline
             - task_key: run_order_item_staging_pipeline
-            - task_key: run_product_pipeline
+            - task_key: run_product_staging_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.order_item_intermediate_pipeline.id}
