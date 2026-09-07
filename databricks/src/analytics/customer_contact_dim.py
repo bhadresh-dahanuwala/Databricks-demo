@@ -14,8 +14,8 @@ dlt.create_streaming_table(
         customer_id INT,
         contact_number STRING,
         source_date DATE,
-        __START_AT TIMESTAMP,
-        __END_AT TIMESTAMP,
+        __START_AT DATE,
+        __END_AT DATE,
         __ACTIVE BOOLEAN
     """
 )
