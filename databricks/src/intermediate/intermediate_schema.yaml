@@ -19,7 +19,11 @@ tables:
         type: integer
       - name: unit_price
         type: float
+      - name: unit_cost
+        type: float
       - name: discount_percentage
+        type: float
+      - name: cost_amount
         type: float
       - name: gross_amount
         type: float
@@ -27,6 +31,10 @@ tables:
       - name: net_amount
         type: float
         description: Calculated as gross_amount - (gross_amount * (discount_percentage / 100))
+      - name: days_to_ship
+        type: integer
+      - name: source_date
+        type: date
     primary_key: [order_id, product_id]
 
   - name: return_items
@@ -42,10 +50,14 @@ tables:
         type: timestamp
       - name: return_reason
         type: string
-      - name: quantity
-        type: integer
       - name: quantity_received
         type: integer
+      - name: return_cost_amount
+        type: float
+      - name: return_amount
+        type: float
+      - name: source_date
+        type: date
     primary_key: [order_id, product_id]
 
   - name: addresses

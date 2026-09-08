@@ -241,6 +241,21 @@ tables:
       surrogate: order_return_key
       primary: [order_id]
 
+  - name: order_return_fct
+    type: fact
+    description:
+    columns:
+      - name: order_id
+      - name: order_return_key          # FK to order_return_dim
+      - name: return_request_date_key   # FK to date_dim
+      - name: return_received_date_key  # FK to date_dim
+      - name: order_key                 # FK to order_dim
+      - name: order_status_key
+      - name: customer_key
+      - name: customer_address_key
+      - name: return_cost_amount # Total cost price of the items returned
+      - name: return_amount # This is the price paid by the customer after discount that we have to return
+
   - name: return_item_fct
     type: fact
     description: >
@@ -252,10 +267,14 @@ tables:
       - name: return_request_date_key   # FK to date_dim
       - name: return_received_date_key  # FK to date_dim
       - name: order_key                 # FK to order_dim
+      - name: order_status_key
       - name: order_return_key          # FK to order_return_dim
       - name: product_key               # FK to product_dim
-      - name: quantity
+      - name: customer_key
+      - name: customer_address_key
       - name: quantity_received
+      - name: return_cost_amount
+      - name: return_amount # This is the price paid by the customer after discount that we have to return
     keys:
       surrogate: return_item_key
       primary: [order_id, product_id]
