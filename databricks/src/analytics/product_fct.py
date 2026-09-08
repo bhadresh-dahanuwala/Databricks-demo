@@ -2,22 +2,27 @@ import dlt
 
 @dlt.view
 def product_fct_cdc():
-    return (
-        spark.readStream.table("ecomm.staging.product")
-        .select(
-            "product_id",
-            "stock_quantity",
-            "unit_cost",
-            "unit_price",
-            "source_date"
-        )
+    df_product_staging = spark.readStream.table("ecomm.staging.product")
+    df_product_dim = spark.table("ecomm.analytics.product_dim")
+    
+    return df_product_staging.join(
+        df_product_dim,
+        on="product_id",
+        how="inner"
+    ).select(
+        df_product_staging["product_id"],
+        df_product_dim["product_key"],
+        df_product_staging["stock_quantity"],
+        df_product_staging["unit_cost"],
+        df_product_staging["unit_price"],
+        df_product_staging["source_date"]
     )
 
 dlt.create_streaming_table(
     name="product_fct",
     comment="Compressed snapshot fact table tracking inventory, cost, and price changes over time.",
     schema="""
-        product_fct_key BIGINT GENERATED ALWAYS AS IDENTITY,
+        product_key     BIGINT,
         product_id      INT,
         stock_quantity  INT,
         unit_cost       FLOAT,
