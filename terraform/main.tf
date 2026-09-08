@@ -108,7 +108,7 @@ resource "databricks_catalog" "ecomm" {
 
 # 9. Databricks Schemas
 locals {
-  schemas = ["raw", "staging", "intermediate", "analytics"]
+  schemas = ["raw", "staging", "intermediate", "analytics", "quarantine"]
 }
 
 resource "databricks_schema" "ecomm_schemas" {
