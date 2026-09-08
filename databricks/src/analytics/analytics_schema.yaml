@@ -190,6 +190,22 @@ tables:
       surrogate: order_status_key
       primary: [order_id, __START_AT]
 
+  - name: order_fct
+    type: fact
+    description:
+    columns:
+      - name: order_id
+      - name: order_key
+      - name: order_status_key
+      - name: customer_key
+      - name: customer_address_key
+      - name: order_date_key
+      - name: order_cost_amount # sum(product_fct.unit_cost * all products associated with this order)
+      - name: order_gross_amount # sum(product_fct.unit_price * all products associated with this order)
+      - name: order_net_amount # order_gross_amount - minus discount
+    keys:
+      primary: [order_id]
+
   - name: order_item_fct
     type: fact (accumulating snapshot)
     description: >
@@ -198,11 +214,12 @@ tables:
       - name: order_item_key     # Surrogate key
       - name: order_id
       - name: product_id
-      - name: order_date_key     # FK to date_dim (Populated at checkout)
-      - name: ship_date_key      # FK to date_dim (Starts NULL, updated at shipping)
       - name: order_key
       - name: product_key
+      - name: order_status_key
       - name: customer_key
+      - name: customer_address_key
+      - name: order_date_key
       - name: shipping_label     # Degenerate dimension (Starts NULL)
       - name: quantity
       - name: gross_amount       # quantity * product unit price
