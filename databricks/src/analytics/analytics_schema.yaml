@@ -137,32 +137,28 @@ tables:
       surrogate: date_key
       primary: [full_date]
 
-  - name: product_daily_snapshot_fct
-    type: fact (periodic snapshot)
+  - name: product_fct
+    type: fact (compressed snapshot / state-change)
     description: >
-      Replaces product_stock_dim, and pulls product_cost/product_price out of
-      product_dim. Stock, cost, and price are all measures sampled at the same
-      grain (one row per product per day), so they belong together in a
-      periodic snapshot fact rather than as dimension attributes:
-        - stock_quantity is semi-additive (sums across products on a given
-          day, but not summable across days — you'd take latest/average).
-        - unit_cost / unit_price are inputs to computed measures (margin =
-          unit_price - unit_cost) that only make sense aggregated/trended
-          over date and product, which is a fact table's job.
-      product_key is the FK into product_dim (now Type 1, so it's a direct
-      1:1 reference rather than an "as of date" version lookup). date_key is
-      the FK into date_dim.
-      ASSUMPTION: single location/warehouse. If stock is tracked per
-      store/warehouse, add a store_key to the grain and primary key below.
+      A compressed snapshot fact table tracking inventory, cost, and price. 
+      Instead of recording a snapshot every single day, this table uses SCD Type 2 logic 
+      to record a new row ONLY when the stock, cost, or price changes. 
+      This eliminates redundancy for slow-moving inventory while still preserving 
+      an exact historical record.
+      __START_AT and __END_AT define the exact time window for which these measures were valid.
+      product_id is the natural key used to join to product_dim.
     columns:
-      - name: date_key             # FK to date_dim
-      - name: product_key          # FK to product_dim
-      - name: product_id           # durable reference, for convenience
+      - name: product_fct_key      # Surrogate key (Identity)
+      - name: product_id           # FK to product_dim (Natural Key)
       - name: stock_quantity       # semi-additive measure
       - name: unit_cost
       - name: unit_price
+      - name: __START_AT
+      - name: __END_AT
+      - name: __ACTIVE
     keys:
-      primary: [product_id, date_key]
+      surrogate: product_fct_key
+      primary: [product_id, __START_AT]
 
   - name: order_dim
     type: dimension (type 1)

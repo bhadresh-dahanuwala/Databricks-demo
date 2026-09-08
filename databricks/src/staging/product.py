@@ -36,12 +36,12 @@ def staging_product():
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
-            col("id"),
-            col("name"),
-            col("category"),
-            col("cost"),
-            col("price"),
-            col("stock")
+            col("id").alias("product_id"),
+            col("name").alias("product_name"),
+            col("category").alias("product_category"),
+            col("cost").alias("unit_cost"),
+            col("price").alias("unit_price"),
+            col("stock").alias("stock_quantity")
         )
     )
 
