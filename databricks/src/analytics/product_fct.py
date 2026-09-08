@@ -17,7 +17,6 @@ dlt.create_streaming_table(
     name="product_fct",
     comment="Compressed snapshot fact table tracking inventory, cost, and price changes over time.",
     schema="""
-        product_fct_key BIGINT GENERATED ALWAYS AS IDENTITY,
         product_id      INT,
         stock_quantity  INT,
         unit_cost       FLOAT,

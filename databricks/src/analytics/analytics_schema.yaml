@@ -148,7 +148,6 @@ tables:
       __START_AT and __END_AT define the exact time window for which these measures were valid.
       product_id is the natural key used to join to product_dim.
     columns:
-      - name: product_fct_key      # Surrogate key (Identity)
       - name: product_id           # FK to product_dim (Natural Key)
       - name: stock_quantity       # semi-additive measure
       - name: unit_cost
@@ -157,7 +156,6 @@ tables:
       - name: __END_AT
       - name: __ACTIVE
     keys:
-      surrogate: product_fct_key
       primary: [product_id, __START_AT]
 
   - name: order_dim
