@@ -24,8 +24,8 @@ def intermediate_return_items():
             col("r.return_request_timestamp"),
             col("r.return_reason"),
             col("ri.quantity_received"),
-            (col("ri.quantity_received") * col("p.unit_cost")).alias("return_cost_amount"),
-            when(col("oi.quantity") > 0, ((col("oi.quantity") * col("p.unit_price")) * (1 - col("o.discount_percentage") / 100) / col("oi.quantity")) * col("ri.quantity_received")).otherwise(lit(0.0)).alias("return_amount"),
+            (col("ri.quantity_received") * col("p.unit_cost")).cast("float").alias("return_cost_amount"),
+            when(col("oi.quantity") > 0, ((col("oi.quantity") * col("p.unit_price")) * (1 - col("o.discount_percentage") / 100) / col("oi.quantity")) * col("ri.quantity_received")).otherwise(lit(0.0)).cast("float").alias("return_amount"),
             col("ri.source_date")
         )
     )

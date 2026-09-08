@@ -24,9 +24,9 @@ def intermediate_order_items():
             col("p.unit_price").alias("unit_price"),
             col("p.unit_cost").alias("unit_cost"),
             col("o.discount_percentage"),
-            (col("oi.quantity") * col("p.unit_cost")).alias("cost_amount"),
-            (col("oi.quantity") * col("p.unit_price")).alias("gross_amount"),
-            ((col("oi.quantity") * col("p.unit_price")) * (1 - col("o.discount_percentage") / 100)).alias("net_amount"),
+            (col("oi.quantity") * col("p.unit_cost")).cast("float").alias("cost_amount"),
+            (col("oi.quantity") * col("p.unit_price")).cast("float").alias("gross_amount"),
+            ((col("oi.quantity") * col("p.unit_price")) * (1 - col("o.discount_percentage") / 100)).cast("float").alias("net_amount"),
             when(col("o.shipping_label").isNotNull(), datediff(col("oi.source_date"), to_date(col("o.order_timestamp")))).otherwise(lit(None).cast("int")).alias("days_to_ship"),
             col("oi.source_date")
         )

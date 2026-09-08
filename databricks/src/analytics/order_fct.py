@@ -28,7 +28,7 @@ def order_fct():
         first("customer_key").alias("customer_key"),
         first("customer_address_key").alias("customer_address_key"),
         first("order_date_key").alias("order_date_key"),
-        _sum(col("quantity") * col("unit_cost")).alias("order_cost_amount"),
-        _sum("gross_amount").alias("order_gross_amount"),
-        _sum("net_amount").alias("order_net_amount")
+        _sum(col("quantity") * col("unit_cost")).cast("float").alias("order_cost_amount"),
+        _sum("gross_amount").cast("float").alias("order_gross_amount"),
+        _sum("net_amount").cast("float").alias("order_net_amount")
     )
