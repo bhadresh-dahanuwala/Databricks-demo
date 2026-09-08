@@ -13,7 +13,7 @@ def intermediate_order_items():
     return (
         order_item.alias("oi")
         .join(order.alias("o"), col("oi.order_id") == col("o.order_id"), "inner")
-        .join(product.alias("p"), col("oi.product_id") == col("p.id"), "inner")
+        .join(product.alias("p"), col("oi.product_id") == col("p.product_id"), "inner")
         .select(
             col("oi.order_id"),
             col("oi.product_id"),
@@ -21,12 +21,12 @@ def intermediate_order_items():
             col("o.order_timestamp"),
             col("o.shipping_label"),
             col("oi.quantity"),
-            col("p.price").alias("unit_price"),
-            col("p.cost").alias("unit_cost"),
+            col("p.unit_price").alias("unit_price"),
+            col("p.unit_cost").alias("unit_cost"),
             col("o.discount_percentage"),
-            (col("oi.quantity") * col("p.cost")).alias("cost_amount"),
-            (col("oi.quantity") * col("p.price")).alias("gross_amount"),
-            ((col("oi.quantity") * col("p.price")) * (1 - col("o.discount_percentage") / 100)).alias("net_amount"),
+            (col("oi.quantity") * col("p.unit_cost")).alias("cost_amount"),
+            (col("oi.quantity") * col("p.unit_price")).alias("gross_amount"),
+            ((col("oi.quantity") * col("p.unit_price")) * (1 - col("o.discount_percentage") / 100)).alias("net_amount"),
             when(col("o.shipping_label").isNotNull(), datediff(col("oi.source_date"), to_date(col("o.order_timestamp")))).otherwise(lit(None).cast("int")).alias("days_to_ship"),
             col("oi.source_date")
         )
