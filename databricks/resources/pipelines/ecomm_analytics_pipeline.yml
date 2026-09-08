@@ -28,3 +28,9 @@ resources:
             path: ../../src/analytics/order_item_fct.py
         - file:
             path: ../../src/analytics/order_fct.py
+        - file:
+            path: ../../src/analytics/order_return_dim.py
+        - file:
+            path: ../../src/analytics/return_item_fct.py
+        - file:
+            path: ../../src/analytics/order_return_fct.py

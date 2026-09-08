@@ -99,8 +99,6 @@ tables:
         type: integer
       - name: product_id
         type: integer
-      - name: quantity
-        type: integer
       - name: quantity_received
         type: integer
     primary_key: [order_id, product_id]

@@ -5,7 +5,6 @@ from util import _validate, pad_missing_columns
 RETURN_ITEM_SCHEMA = {
     "order_id": {"mandatory": True, "type": "int"},
     "product_id": {"mandatory": True, "type": "int"},
-    "quantity": {"mandatory": True, "type": "int"},
     "quantity_received": {"mandatory": True, "type": "int"}
 }
 
@@ -36,7 +35,6 @@ def staging_return_item():
             col("source_date"),
             col("order_id"),
             col("product_id"),
-            col("quantity"),
             col("quantity_received")
         )
     )

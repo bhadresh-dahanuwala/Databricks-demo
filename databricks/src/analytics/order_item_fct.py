@@ -1,22 +1,18 @@
 import dlt
-from pyspark.sql.functions import col, date_format, datediff, coalesce, lit, to_date, when
+from pyspark.sql.functions import col, date_format
 
 @dlt.view
 def order_item_cdc():
-    df_item = spark.readStream.table("ecomm.staging.order_item")
-    df_order = spark.table("ecomm.staging.order")
+    df_item = spark.readStream.table("ecomm.intermediate.order_items")
     df_order_dim = spark.table("ecomm.analytics.order_dim")
     df_prod_dim = spark.table("ecomm.analytics.product_dim")
     df_cust_dim = spark.table("ecomm.analytics.customer_dim").filter(col("__ACTIVE") == True)
-    df_prod_fct = spark.table("ecomm.analytics.product_fct").filter(col("__ACTIVE") == True)
     df_order_status = spark.table("ecomm.analytics.order_status_dim").filter(col("__ACTIVE") == True)
     df_cust_addr = spark.table("ecomm.analytics.customer_address_bridge").filter((col("__ACTIVE") == True) & (col("address_type") == "Home"))
 
-    joined = df_item.join(df_order, on="order_id", how="left") \
-        .join(df_order_dim, on="order_id", how="left") \
+    joined = df_item.join(df_order_dim, on="order_id", how="left") \
         .join(df_prod_dim, on="product_id", how="left") \
         .join(df_cust_dim, on="customer_id", how="left") \
-        .join(df_prod_fct, on="product_id", how="left") \
         .join(df_order_status, on="order_id", how="left") \
         .join(df_cust_addr, on="customer_id", how="left")
 
@@ -28,12 +24,12 @@ def order_item_cdc():
         df_order_status["order_status_key"],
         df_cust_dim["customer_key"],
         df_cust_addr["customer_address_key"],
-        date_format(df_order["order_timestamp"], "yyyyMMdd").cast("int").alias("order_date_key"),
-        df_order["shipping_label"],
+        date_format(df_item["order_timestamp"], "yyyyMMdd").cast("int").alias("order_date_key"),
+        df_item["shipping_label"],
         df_item["quantity"],
-        (df_item["quantity"] * df_prod_fct["unit_price"]).alias("gross_amount"),
-        ((df_item["quantity"] * df_prod_fct["unit_price"]) * (1 - coalesce(df_order["discount_percentage"], lit(0.0)) / 100)).alias("net_amount"),
-        when(df_order["shipping_label"].isNotNull(), datediff(df_item["source_date"], to_date(df_order["order_timestamp"]))).otherwise(lit(None).cast("int")).alias("days_to_ship"),
+        df_item["gross_amount"],
+        df_item["net_amount"],
+        df_item["days_to_ship"],
         df_item["source_date"]
     )
 
