@@ -1,7 +1,7 @@
 import dlt
 from pyspark.sql.functions import col, when, lit
 
-@dlt.view(
+@dlt.table(
     name="return_items",
     comment="Enriched return line items with header-level timestamps and reasons."
 )
