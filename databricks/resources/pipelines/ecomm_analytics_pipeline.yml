@@ -16,3 +16,7 @@ resources:
             path: ../../src/analytics/address_dim.py
         - file:
             path: ../../src/analytics/customer_address_bridge.py
+        - file:
+            path: ../../src/analytics/product_dim.py
+        - file:
+            path: ../../src/analytics/product_fct.py
