@@ -44,7 +44,8 @@ dlt.create_streaming_table(
         customer_address_key      BIGINT,
         quantity_received         INT,
         return_cost_amount        FLOAT,
-        return_amount             FLOAT
+        return_amount             FLOAT,
+        source_date               DATE
     """
 )
 

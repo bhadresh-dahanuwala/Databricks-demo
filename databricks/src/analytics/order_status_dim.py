@@ -18,6 +18,7 @@ dlt.create_streaming_table(
         order_status_key    BIGINT GENERATED ALWAYS AS IDENTITY,
         order_id            INT,
         order_status        STRING,
+        source_date         DATE,
         __START_AT          DATE,
         __END_AT            DATE,
         __ACTIVE            BOOLEAN GENERATED ALWAYS AS (__END_AT IS NULL)

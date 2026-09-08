@@ -13,7 +13,8 @@ dlt.create_streaming_table(
     schema="""
         order_return_key  BIGINT GENERATED ALWAYS AS IDENTITY,
         order_id          INT,
-        return_reason     STRING
+        return_reason     STRING,
+        source_date       DATE
     """
 )
 

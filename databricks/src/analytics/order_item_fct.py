@@ -50,7 +50,8 @@ dlt.create_streaming_table(
         quantity                INT,
         gross_amount            FLOAT,
         net_amount              FLOAT,
-        days_to_ship            INT
+        days_to_ship            INT,
+        source_date             DATE
     """
 )
 
