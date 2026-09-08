@@ -40,7 +40,7 @@ def staging_order_item():
     )
 
 @dlt.table(
-    name="order_item_quarantine",
+    name="quarantine.order_item",
     comment="Order item records missing a mandatory field or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
              "the source, but formatting (field order, whitespace) is not guaranteed to match the original file."

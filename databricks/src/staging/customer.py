@@ -73,7 +73,7 @@ def staging_customer():
     )
 
 @dlt.table(
-    name="customer_quarantine",
+    name="quarantine.customer",
     comment="Customer records missing a mandatory field (at any nesting level) or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
              "the source, but formatting (field order, whitespace) is not guaranteed to match the original file."
@@ -121,7 +121,7 @@ def staging_customer_contact():
     )
 
 @dlt.table(
-    name="customer_contact_quarantine",
+    name="quarantine.customer_contact",
     comment="Customer contact records missing a mandatory field or failing an expected data type."
 )
 def staging_customer_contact_quarantine():
@@ -177,7 +177,7 @@ def staging_customer_address():
     )
 
 @dlt.table(
-    name="customer_address_quarantine",
+    name="quarantine.customer_address",
     comment="Customer address records missing a mandatory field or failing an expected data type."
 )
 def staging_customer_address_quarantine():
