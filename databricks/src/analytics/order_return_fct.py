@@ -28,6 +28,6 @@ def order_return_fct():
         first("order_status_key").alias("order_status_key"),
         first("customer_key").alias("customer_key"),
         first("customer_address_key").alias("customer_address_key"),
-        _sum("return_cost_amount").alias("return_cost_amount"),
-        _sum("return_amount").alias("return_amount")
+        _sum("return_cost_amount").cast("float").alias("return_cost_amount"),
+        _sum("return_amount").cast("float").alias("return_amount")
     )
