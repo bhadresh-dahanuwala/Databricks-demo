@@ -14,7 +14,8 @@ dlt.create_streaming_table(
         product_key      BIGINT GENERATED ALWAYS AS IDENTITY,
         product_id       INT,
         product_name     STRING,
-        product_category STRING
+        product_category STRING,
+        source_date      DATE
     """
 )
 

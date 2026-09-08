@@ -25,7 +25,8 @@ dlt.create_streaming_table(
         customer_id         INT,
         order_mode          STRING,
         return_windows_days INT,
-        discount_percentage FLOAT
+        discount_percentage FLOAT,
+        source_date         DATE
     """
 )
 

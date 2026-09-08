@@ -27,6 +27,7 @@ dlt.create_streaming_table(
         stock_quantity  INT,
         unit_cost       FLOAT,
         unit_price      FLOAT,
+        source_date     DATE,
         __START_AT      DATE,
         __END_AT        DATE,
         __ACTIVE        BOOLEAN GENERATED ALWAYS AS (__END_AT IS NULL)
