@@ -4,11 +4,11 @@ import dlt
 def product_fct_cdc():
     return (
         spark.readStream.table("ecomm.staging.product")
-        .selectExpr(
-            "id as product_id",
-            "stock as stock_quantity",
-            "cost as unit_cost",
-            "price as unit_price",
+        .select(
+            "product_id",
+            "stock_quantity",
+            "unit_cost",
+            "unit_price",
             "source_date"
         )
     )

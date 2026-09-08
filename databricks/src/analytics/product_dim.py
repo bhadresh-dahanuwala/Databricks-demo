@@ -4,7 +4,7 @@ import dlt
 def product_dim_cdc():
     return (
         spark.readStream.table("ecomm.staging.product")
-        .selectExpr("id as product_id", "name as product_name", "category as product_category", "source_date")
+        .select("product_id", "product_name", "product_category", "source_date")
     )
 
 dlt.create_streaming_table(
