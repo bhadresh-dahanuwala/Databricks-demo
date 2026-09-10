@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, date_format
 
 @dlt.view
 def order_item_cdc():
-    df_item = spark.readStream.table("ecomm.intermediate.order_items")
+    df_item = spark.readStream.option("ignoreChanges", "true").table("ecomm.intermediate.order_items")
     df_order_dim = spark.table("ecomm.analytics.order_dim")
     df_prod_dim = spark.table("ecomm.analytics.product_dim")
     df_cust_dim = spark.table("ecomm.analytics.customer_dim").filter(col("__ACTIVE") == True)
