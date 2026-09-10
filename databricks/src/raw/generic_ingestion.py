@@ -2,7 +2,8 @@ import dlt
 from pyspark.sql.functions import col, regexp_extract, to_date
 
 VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
-ENTITIES = ["customer", "product", "order", "order_item", "return", "return_item"]
+# order and order_item are migrated to Supabase CDC (Lakeflow Connect)
+ENTITIES = ["customer", "product", "return", "return_item"]
 
 def generate_raw_table(entity_name):
     @dlt.table(
