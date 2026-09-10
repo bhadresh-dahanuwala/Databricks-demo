@@ -10,3 +10,6 @@ resources:
       libraries:
         - file:
             path: ../../src/raw/generic_ingestion.py
+        - file:
+            path: ../../src/raw/supabase_ingestion.py
+
