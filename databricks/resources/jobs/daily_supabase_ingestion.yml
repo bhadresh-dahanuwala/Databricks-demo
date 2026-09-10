@@ -1,17 +1,14 @@
 resources:
   jobs:
-    trigger_raw_ingestion:
-      name: "Trigger Raw Ingestion on File Arrival"
-      trigger:
-        file_arrival:
-          url: /Volumes/${var.catalog}/raw/raw_vol/
+    daily_supabase_ingestion:
+      name: "Daily Supabase Ingestion & Processing"
       tasks:
-        - task_key: run_raw_pipeline
-          pipeline_task:
-            pipeline_id: ${resources.pipelines.ecomm_raw_pipeline.id}
+        - task_key: sync_supabase_to_raw
+          notebook_task:
+            notebook_path: ../../src/raw/supabase_ingestion.py
         - task_key: run_staging_pipeline
           depends_on:
-            - task_key: run_raw_pipeline
+            - task_key: sync_supabase_to_raw
           pipeline_task:
             pipeline_id: ${resources.pipelines.ecomm_staging_pipeline.id}
         - task_key: run_intermediate_pipeline
