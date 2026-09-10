@@ -159,12 +159,13 @@ resource "databricks_connection" "supabase_postgres" {
   comment         = "Supabase PostgreSQL connection for Lakehouse Federation"
 
   options = {
-    host     = "db.upytyqlvqhkfrdswmwuj.supabase.co"
+    host     = "aws-0-us-east-2.pooler.supabase.com"
     port     = "5432"
-    user     = "postgres"
+    user     = "postgres.upytyqlvqhkfrdswmwuj"
     password = data.azurerm_key_vault_secret.supabase_password.value
   }
 }
+
 
 resource "databricks_grants" "supabase_connection_grants" {
   foreign_connection = databricks_connection.supabase_postgres.name
