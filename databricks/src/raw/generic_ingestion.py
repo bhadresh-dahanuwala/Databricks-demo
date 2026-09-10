@@ -2,37 +2,43 @@ import dlt
 from pyspark.sql.functions import col, regexp_extract, to_date
 
 VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
-# order and order_item are migrated to Supabase CDC (Lakeflow Connect)
-ENTITIES = ["customer", "product", "return", "return_item"]
+ENTITIES = [
+    ("customer", "customer"),
+    ("product", "product"),
+    ("order", "order__adls"),
+    ("order_item", "order_item__adls"),
+    ("return", "return"),
+    ("return_item", "return_item"),
+]
 
-def generate_raw_table(entity_name):
+def generate_raw_table(entity_name, table_name):
     @dlt.table(
-        name=entity_name,
-        comment=f"Raw {entity_name} data ingested incrementally using Auto Loader. "
+        name=table_name,
+        comment=f"Raw {entity_name} data ingested incrementally from ADLS using Auto Loader. "
                  f"Schema/types are auto-inferred and evolve over time; the "
                  f"staging layer enforces the actual expected contract "
                  f"(mandatory columns, expected types) independently of "
-                 f"whatever gets inferred here."
+                 f"what Auto Loader infers here.",
+        table_properties={"quality": "bronze"}
     )
-    def raw_ingestion():
-        df = (
+    def _raw():
+        return (
             spark.readStream.format("cloudFiles")
             .option("cloudFiles.format", "json")
             .option("multiLine", "true")  # supports pretty-printed, multi-line records
             .option("cloudFiles.schemaEvolutionMode", "rescue")
             # Infer schema and evolve it if it changes
-            .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_{entity_name}")
+            .option("cloudFiles.schemaLocation", f"{VOLUME_PATH}/_schemas/raw_{table_name}")
             .option("cloudFiles.inferColumnTypes", "true")
-            # Matches files like customers.json, products.json, etc.
+            # Matches files like customers.json, products.json, orders.json, etc.
             .option("pathGlobFilter", f"{entity_name}s.json")
             .load(VOLUME_PATH)
-        )
-        
-        return df.withColumn(
-            "source_date", 
-            to_date(regexp_extract(col("_metadata.file_path"), r"/(\d{8})/", 1), "yyyyMMdd")
+        ) \
+        .withColumn(
+            "source_date",
+            to_date(regexp_extract(col("_metadata.file_path"), r"(\d{8})", 1), "yyyyMMdd")
         )
 
 # Register all entities dynamically
-for entity in ENTITIES:
-    generate_raw_table(entity)
+for entity, tbl in ENTITIES:
+    generate_raw_table(entity, tbl)

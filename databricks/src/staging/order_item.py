@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date, lit
 from util import _validate, pad_missing_columns
 
 ORDER_ITEM_SCHEMA = {
@@ -8,9 +8,7 @@ ORDER_ITEM_SCHEMA = {
     "quantity":   {"mandatory": True, "type": "int"}
 }
 
-@dlt.view(name="order_item_parsed")
-def order_item_parsed():
-    df = spark.readStream.table("ecomm.raw.order_item")
+def _parse_order_item(df, source_name):
     if "source_date" not in df.columns:
         df = df.withColumn("source_date", current_date())
     df = pad_missing_columns(df, ORDER_ITEM_SCHEMA)
@@ -23,13 +21,27 @@ def order_item_parsed():
 
     return (
         df.withColumn("_is_invalid", is_invalid)
+        .withColumn("source_system", lit(source_name))
     )
 
-@dlt.table(
-    name="order_item",
-    comment="Cleaned, typed, and validated order item data in the staging layer."
-)
-def staging_order_item():
+@dlt.view(name="order_item_parsed__adls")
+def order_item_parsed_adls():
+    df = spark.readStream.table("ecomm.raw.order_item__adls")
+    return _parse_order_item(df, "ADLS")
+
+@dlt.view(name="order_item_parsed__postgres")
+def order_item_parsed_postgres():
+    df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order_item__postgres")
+    return _parse_order_item(df, "POSTGRES")
+
+@dlt.view(name="order_item_parsed")
+def order_item_parsed():
+    adls = dlt.read_stream("order_item_parsed__adls")
+    pg = dlt.read_stream("order_item_parsed__postgres")
+    return adls.unionByName(pg)
+
+@dlt.view(name="order_item_valid")
+def order_item_valid():
     return (
         dlt.read_stream("order_item_parsed")
         .filter("_is_invalid = false")
@@ -37,9 +49,27 @@ def staging_order_item():
             col("source_date"),
             col("order_id"),
             col("product_id"),
-            col("quantity")
+            col("quantity"),
+            col("source_system")
         )
     )
+
+dlt.create_streaming_table(
+    name="order_item",
+    comment="Cleaned, typed, and validated order item data in the staging layer. Deduplicated across sources by (order_id, product_id).",
+    table_properties={
+        "quality": "silver",
+        "delta.enableChangeDataFeed": "true"
+    }
+)
+
+dlt.apply_changes(
+    target="order_item",
+    source="order_item_valid",
+    keys=["order_id", "product_id"],
+    sequence_by="source_date",
+    stored_as_scd_type=1
+)
 
 @dlt.table(
     name="quarantine.order_item",

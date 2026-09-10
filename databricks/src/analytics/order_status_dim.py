@@ -3,7 +3,7 @@ import dlt
 @dlt.view
 def order_status_cdc():
     return (
-        spark.readStream.table("ecomm.staging.order")
+        spark.readStream.option("ignoreChanges", "true").table("ecomm.staging.order")
         .select(
             "order_id",
             "order_status",

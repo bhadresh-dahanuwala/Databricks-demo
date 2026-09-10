@@ -6,7 +6,7 @@ from pyspark.sql.functions import col, datediff, to_date, when, lit
     comment="Enriched order line items with pre-calculated financial measures."
 )
 def intermediate_order_items():
-    order_item = spark.readStream.table("ecomm.staging.order_item")
+    order_item = spark.readStream.option("ignoreChanges", "true").table("ecomm.staging.order_item")
     order = spark.table("ecomm.staging.order")
     product = spark.table("ecomm.staging.product")
     

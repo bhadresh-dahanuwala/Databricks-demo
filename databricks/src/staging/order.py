@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date, lit
 from util import _validate, pad_missing_columns
 
 ORDER_SCHEMA = {
@@ -9,13 +9,11 @@ ORDER_SCHEMA = {
     "order_mode":           {"mandatory": True,  "type": "string"},
     "order_status":         {"mandatory": True,  "type": "string"},
     "return_windows_days":  {"mandatory": True,  "type": "int"},
-    "discount_percentage":  {"mandatory": False,  "type": "float"},
-    "shipping_label":       {"mandatory": False,  "type": "string"}
+    "discount_percentage":  {"mandatory": False, "type": "float"},
+    "shipping_label":       {"mandatory": False, "type": "string"}
 }
 
-@dlt.view(name="order_parsed")
-def order_parsed():
-    df = spark.readStream.table("ecomm.raw.order")
+def _parse_order(df, source_name):
     if "source_date" not in df.columns:
         df = df.withColumn("source_date", to_date(col("order_timestamp")))
     df = pad_missing_columns(df, ORDER_SCHEMA)
@@ -29,13 +27,27 @@ def order_parsed():
     return (
         df.withColumn("_is_invalid", is_invalid)
         .withColumnRenamed("id", "order_id")
+        .withColumn("source_system", lit(source_name))
     )
 
-@dlt.table(
-    name="order",
-    comment="Cleaned, typed, and validated order data in the staging layer."
-)
-def staging_order():
+@dlt.view(name="order_parsed__adls")
+def order_parsed_adls():
+    df = spark.readStream.table("ecomm.raw.order__adls")
+    return _parse_order(df, "ADLS")
+
+@dlt.view(name="order_parsed__postgres")
+def order_parsed_postgres():
+    df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order__postgres")
+    return _parse_order(df, "POSTGRES")
+
+@dlt.view(name="order_parsed")
+def order_parsed():
+    adls = dlt.read_stream("order_parsed__adls")
+    pg = dlt.read_stream("order_parsed__postgres")
+    return adls.unionByName(pg)
+
+@dlt.view(name="order_valid")
+def order_valid():
     return (
         dlt.read_stream("order_parsed")
         .filter("_is_invalid = false")
@@ -48,9 +60,27 @@ def staging_order():
             col("order_status"),
             col("return_windows_days"),
             col("discount_percentage"),
-            col("shipping_label")
+            col("shipping_label"),
+            col("source_system")
         )
     )
+
+dlt.create_streaming_table(
+    name="order",
+    comment="Cleaned, typed, and validated order data in the staging layer. Deduplicated across sources by latest order_timestamp.",
+    table_properties={
+        "quality": "silver",
+        "delta.enableChangeDataFeed": "true"
+    }
+)
+
+dlt.apply_changes(
+    target="order",
+    source="order_valid",
+    keys=["order_id"],
+    sequence_by="order_timestamp",
+    stored_as_scd_type=1
+)
 
 @dlt.table(
     name="quarantine.order",
