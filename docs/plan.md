@@ -86,15 +86,24 @@ Since `order`, `order_item`, `return`, and `return_item` already have history fl
 ## 5. Architectural Decisions Status
 
 1. **Entity mapping (Resolved):**
-   - **Supabase (PostgreSQL CDC):** `orders`, `order_items`
+   - **Supabase (PostgreSQL):** `orders`, `order_items`
+   - **ADLS (Storage):** `orders`, `order_items`, `customers`, `products`, `returns`, `return_items`
    - **Confluent Cloud (Kafka Event Stream):** `returns`, `return_items`
 2. **Postgres Ingestion Strategy (Resolved):**
-   - **Option 2 (Lakeflow Connect CDC)** selected.
-   - Verification confirmed: `wal_level = logical` and `max_replication_slots = 5` on Supabase project `ECOMM`.
-   - Practice/demo scope: Lightweight volumes mitigate free-tier storage/compute limits.
-3. **Secret & Credential Management (Resolved):**
+   - **Lakehouse Federation (Zero-ETL / Managed Foreign Catalog)** configured with IPv4 session pooler (`aws-0-us-east-2.pooler.supabase.com:5432`) via Unity Catalog foreign catalog `supabase`.
+   - Data is ingested into physical bronze tables in raw layer: `ecomm.raw.order__postgres` and `ecomm.raw.order_item__postgres`.
+3. **Multi-Source Raw & Staging Architecture (Resolved):**
+   - **Raw Layer Naming:**
+     - ADLS Auto Loader lands as-is in `ecomm.raw.order__adls` and `ecomm.raw.order_item__adls`.
+     - Supabase Postgres lands as-is in `ecomm.raw.order__postgres` and `ecomm.raw.order_item__postgres`.
+   - **Staging Layer Harmonization & Deduplication:**
+     - `ecomm.staging.order` and `ecomm.staging.order_item` union the cleaned, typed streams from both sources.
+     - Each record is tagged with `source_system` (`ADLS` vs `POSTGRES`).
+     - Deduplication: When duplicate order IDs occur across sources, the most recent record (by `order_timestamp` / `source_date`) is stored using `dlt.apply_changes(stored_as_scd_type=1)`.
+     - Invalid records missing mandatory fields or failing schema types are routed to `quarantine.order` and `quarantine.order_item`.
+     - Change Data Feed (`delta.enableChangeDataFeed = true`) enabled on staging tables.
+4. **Secret & Credential Management (Resolved):**
    - Public repository safety: No credentials or sensitive parameters committed to git.
-   - Credentials (Supabase DB password, Confluent API key/secret) will be stored in **Azure Key Vault**.
-   - Databricks/Terraform will retrieve secrets via Azure Key Vault-backed secret scope or Terraform environment variables/remote state references.
-4. **Data format & Schema Registry (Kafka):** Standard JSON payloads for `returns` and `return_items` events.
-5. **Historical backfill scope:** Existing JSON history in `raw`/`analytics` is retained as-is; new sources stream incremental records from cutover point forward.
+   - Credentials (Supabase DB password, Confluent API key/secret) stored in **Azure Key Vault** (`kv-dbw-ecommerce`).
+   - Terraform dynamically fetches secrets from Key Vault via data source `azurerm_key_vault_secret`.
+5. **Data format & Schema Registry (Kafka):** Standard JSON payloads for `returns` and `return_items` events.
