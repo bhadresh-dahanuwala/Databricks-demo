@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date, lit
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date, lit, coalesce
 from util import _validate, pad_missing_columns
 
 ORDER_SCHEMA = {
@@ -10,7 +10,8 @@ ORDER_SCHEMA = {
     "order_status":         {"mandatory": True,  "type": "string"},
     "return_windows_days":  {"mandatory": True,  "type": "int"},
     "discount_percentage":  {"mandatory": False, "type": "float"},
-    "shipping_label":       {"mandatory": False, "type": "string"}
+    "shipping_label":       {"mandatory": False, "type": "string"},
+    "updated_at":           {"mandatory": False, "type": "timestamp"}
 }
 
 def _parse_order(df, source_name):
@@ -23,6 +24,8 @@ def _parse_order(df, source_name):
         casted, bad = _validate(col(c), spec)
         is_invalid = bad if is_invalid is None else (is_invalid | bad)
         df = df.withColumn(c, casted)
+
+    df = df.withColumn("updated_at", coalesce(col("updated_at"), col("order_timestamp")))
 
     return (
         df.withColumn("_is_invalid", is_invalid)
@@ -61,13 +64,14 @@ def order_valid():
             col("return_windows_days"),
             col("discount_percentage"),
             col("shipping_label"),
-            col("source_system")
+            col("source_system"),
+            col("updated_at")
         )
     )
 
 dlt.create_streaming_table(
     name="order",
-    comment="Cleaned, typed, and validated order data in the staging layer. Deduplicated across sources by latest order_timestamp.",
+    comment="Cleaned, typed, and validated order data in the staging layer. Deduplicated across sources by latest updated_at/order_timestamp.",
     table_properties={
         "quality": "silver",
         "delta.enableChangeDataFeed": "true"
@@ -78,7 +82,7 @@ dlt.apply_changes(
     target="order",
     source="order_valid",
     keys=["order_id"],
-    sequence_by="order_timestamp",
+    sequence_by="updated_at",
     stored_as_scd_type=1
 )
 
