@@ -1,24 +1,15 @@
-import dlt
+# Databricks notebook source
+# Ingest raw orders and order_items from Supabase PostgreSQL via Lakehouse Federation into managed Delta tables
 from pyspark.sql.functions import col, current_date, to_date
 
-@dlt.table(
-    name="order__postgres",
-    comment="Raw order data ingested from Supabase Postgres via Lakehouse Federation.",
-    table_properties={"quality": "bronze"}
+(
+    spark.read.table("supabase.public.orders")
+    .withColumn("source_date", to_date(col("order_timestamp")))
+    .write.format("delta").mode("overwrite").saveAsTable("ecomm.raw.order__postgres")
 )
-def raw_order_postgres():
-    return (
-        spark.read.table("supabase.public.orders")
-        .withColumn("source_date", to_date(col("order_timestamp")))
-    )
 
-@dlt.table(
-    name="order_item__postgres",
-    comment="Raw order item data ingested from Supabase Postgres via Lakehouse Federation.",
-    table_properties={"quality": "bronze"}
+(
+    spark.read.table("supabase.public.order_items")
+    .withColumn("source_date", current_date())
+    .write.format("delta").mode("overwrite").saveAsTable("ecomm.raw.order_item__postgres")
 )
-def raw_order_item_postgres():
-    return (
-        spark.read.table("supabase.public.order_items")
-        .withColumn("source_date", current_date())
-    )

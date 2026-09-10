@@ -93,11 +93,11 @@ Since `order`, `order_item`, `return`, and `return_item` already have history fl
    - **Lakehouse Federation (Zero-ETL / Managed Foreign Catalog)** configured with IPv4 session pooler (`aws-0-us-east-2.pooler.supabase.com:5432`) via Unity Catalog foreign catalog `supabase`.
    - Data is ingested into physical bronze tables in raw layer: `ecomm.raw.order__postgres` and `ecomm.raw.order_item__postgres`.
 3. **Multi-Source Raw & Staging Architecture (Resolved):**
-   - **Raw Layer Naming:**
-     - ADLS Auto Loader lands as-is in `ecomm.raw.order__adls` and `ecomm.raw.order_item__adls`.
-     - Supabase Postgres lands as-is in `ecomm.raw.order__postgres` and `ecomm.raw.order_item__postgres`.
+   - **Raw Layer Architecture:**
+     - ADLS Auto Loader lands as-is in `ecomm.raw.order__adls` and `ecomm.raw.order_item__adls` via `ecomm_raw_pipeline`.
+     - Supabase Postgres lands as-is in managed Delta tables `ecomm.raw.order__postgres` and `ecomm.raw.order_item__postgres` via the `sync_supabase_to_raw` task in `trigger_raw_ingestion`. This ensures they are standard managed Delta tables, enabling downstream Spark Structured Streaming.
    - **Staging Layer Harmonization & Deduplication:**
-     - `ecomm.staging.order` and `ecomm.staging.order_item` union the cleaned, typed streams from both sources.
+     - `ecomm.staging.order` and `ecomm.staging.order_item` union the cleaned, typed streams from both sources (`unionByName(..., allowMissingColumns=True)`).
      - Each record is tagged with `source_system` (`ADLS` vs `POSTGRES`).
      - Deduplication: When duplicate order IDs occur across sources, the most recent record (by `order_timestamp` / `source_date`) is stored using `dlt.apply_changes(stored_as_scd_type=1)`.
      - Invalid records missing mandatory fields or failing schema types are routed to `quarantine.order` and `quarantine.order_item`.
