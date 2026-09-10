@@ -3,7 +3,7 @@ from pyspark.sql.functions import col, date_format, lit, to_date, when
 
 @dlt.view
 def return_item_cdc():
-    df_ret_item = spark.readStream.table("ecomm.intermediate.return_items")
+    df_ret_item = spark.readStream.option("ignoreChanges", "true").table("ecomm.intermediate.return_items")
     df_order_ret_dim = spark.table("ecomm.analytics.order_return_dim")
     df_order_item_fct = spark.table("ecomm.analytics.order_item_fct")
     

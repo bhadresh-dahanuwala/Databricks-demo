@@ -6,7 +6,7 @@ from pyspark.sql.functions import col, when, lit
     comment="Enriched return line items with header-level timestamps and reasons."
 )
 def intermediate_return_items():
-    return_item = spark.readStream.table("ecomm.staging.return_item")
+    return_item = spark.readStream.option("ignoreChanges", "true").table("ecomm.staging.return_item")
     returns = spark.table("ecomm.staging.returns")
     order = spark.table("ecomm.staging.order")
     order_item = spark.table("ecomm.staging.order_item")
