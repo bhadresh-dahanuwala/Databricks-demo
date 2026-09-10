@@ -12,3 +12,8 @@ output "supabase_connection_name" {
   description = "Name of the Unity Catalog PostgreSQL connection for Supabase"
   value       = databricks_connection.supabase_postgres.name
 }
+
+output "supabase_catalog_name" {
+  description = "Name of the Lakehouse Federation foreign catalog for Supabase"
+  value       = databricks_catalog.supabase.name
+}

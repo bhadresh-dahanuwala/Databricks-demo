@@ -152,11 +152,11 @@ data "azurerm_key_vault_secret" "supabase_password" {
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
-# 13. Unity Catalog Connection for Supabase PostgreSQL (Lakeflow Connect CDC)
+# 13. Unity Catalog Connection for Supabase PostgreSQL (Lakehouse Federation)
 resource "databricks_connection" "supabase_postgres" {
   name            = "supabase_postgres"
   connection_type = "POSTGRESQL"
-  comment         = "Supabase PostgreSQL connection for Lakeflow Connect CDC"
+  comment         = "Supabase PostgreSQL connection for Lakehouse Federation"
 
   options = {
     host     = "db.upytyqlvqhkfrdswmwuj.supabase.co"
@@ -171,6 +171,27 @@ resource "databricks_grants" "supabase_connection_grants" {
 
   grant {
     principal  = "account users"
-    privileges = ["USE_CONNECTION"]
+    privileges = ["USE_CONNECTION", "CREATE_FOREIGN_CATALOG"]
   }
 }
+
+# 14. Lakehouse Federation Foreign Catalog for Supabase PostgreSQL
+resource "databricks_catalog" "supabase" {
+  name            = "supabase"
+  connection_name = databricks_connection.supabase_postgres.name
+  comment         = "Lakehouse Federation Foreign Catalog for Supabase PostgreSQL"
+
+  options = {
+    database = "postgres"
+  }
+}
+
+resource "databricks_grants" "supabase_catalog_grants" {
+  catalog = databricks_catalog.supabase.name
+
+  grant {
+    principal  = "account users"
+    privileges = ["USE_CATALOG", "SELECT"]
+  }
+}
+
