@@ -192,7 +192,8 @@ resource "databricks_grants" "supabase_catalog_grants" {
 
   grant {
     principal  = "account users"
-    privileges = ["USE_CATALOG", "SELECT"]
+    privileges = ["USE_CATALOG", "USE_SCHEMA", "SELECT", "BROWSE"]
   }
 }
+
 
