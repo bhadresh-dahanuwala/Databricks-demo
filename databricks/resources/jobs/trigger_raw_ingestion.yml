@@ -9,9 +9,13 @@ resources:
         - task_key: run_raw_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.ecomm_raw_pipeline.id}
+        - task_key: sync_supabase_to_raw
+          notebook_task:
+            notebook_path: ../../src/raw/supabase_ingestion.py
         - task_key: run_staging_pipeline
           depends_on:
             - task_key: run_raw_pipeline
+            - task_key: sync_supabase_to_raw
           pipeline_task:
             pipeline_id: ${resources.pipelines.ecomm_staging_pipeline.id}
         - task_key: run_intermediate_pipeline

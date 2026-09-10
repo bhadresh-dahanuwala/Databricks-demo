@@ -38,7 +38,7 @@ def order_item_parsed_postgres():
 def order_item_parsed():
     adls = dlt.read_stream("order_item_parsed__adls")
     pg = dlt.read_stream("order_item_parsed__postgres")
-    return adls.unionByName(pg)
+    return adls.unionByName(pg, allowMissingColumns=True)
 
 @dlt.view(name="order_item_valid")
 def order_item_valid():
