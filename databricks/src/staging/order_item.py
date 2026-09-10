@@ -1,11 +1,12 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date, lit
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date, lit, coalesce
 from util import _validate, pad_missing_columns
 
 ORDER_ITEM_SCHEMA = {
     "order_id":   {"mandatory": True, "type": "int"},
     "product_id": {"mandatory": True, "type": "int"},
-    "quantity":   {"mandatory": True, "type": "int"}
+    "quantity":   {"mandatory": True, "type": "int"},
+    "updated_at": {"mandatory": False, "type": "timestamp"}
 }
 
 def _parse_order_item(df, source_name):
@@ -18,6 +19,8 @@ def _parse_order_item(df, source_name):
         casted, bad = _validate(col(c), spec)
         is_invalid = bad if is_invalid is None else (is_invalid | bad)
         df = df.withColumn(c, casted)
+
+    df = df.withColumn("updated_at", coalesce(col("updated_at"), col("source_date").cast("timestamp")))
 
     return (
         df.withColumn("_is_invalid", is_invalid)
@@ -50,13 +53,14 @@ def order_item_valid():
             col("order_id"),
             col("product_id"),
             col("quantity"),
-            col("source_system")
+            col("source_system"),
+            col("updated_at")
         )
     )
 
 dlt.create_streaming_table(
     name="order_item",
-    comment="Cleaned, typed, and validated order item data in the staging layer. Deduplicated across sources by (order_id, product_id).",
+    comment="Cleaned, typed, and validated order item data in the staging layer. Deduplicated across sources by (order_id, product_id) by latest updated_at/source_date.",
     table_properties={
         "quality": "silver",
         "delta.enableChangeDataFeed": "true"
@@ -67,7 +71,7 @@ dlt.apply_changes(
     target="order_item",
     source="order_item_valid",
     keys=["order_id", "product_id"],
-    sequence_by="source_date",
+    sequence_by="updated_at",
     stored_as_scd_type=1
 )
 
