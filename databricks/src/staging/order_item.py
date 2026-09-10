@@ -1,5 +1,5 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date
 from util import _validate, pad_missing_columns
 
 ORDER_ITEM_SCHEMA = {
@@ -11,6 +11,8 @@ ORDER_ITEM_SCHEMA = {
 @dlt.view(name="order_item_parsed")
 def order_item_parsed():
     df = spark.readStream.table("ecomm.raw.order_item")
+    if "source_date" not in df.columns:
+        df = df.withColumn("source_date", current_date())
     df = pad_missing_columns(df, ORDER_ITEM_SCHEMA)
 
     is_invalid = None

@@ -1,0 +1,31 @@
+resources:
+  pipelines:
+    supabase_ingestion_gateway:
+      name: "Supabase Ingestion Gateway"
+      channel: "PREVIEW"
+      gateway_definition:
+        connection_name: "supabase_postgres"
+        gateway_storage_catalog: ${var.catalog}
+        gateway_storage_schema: "raw"
+        gateway_storage_name: "raw_vol"
+
+    supabase_cdc_pipeline:
+      name: "Supabase CDC Ingestion Pipeline"
+      channel: "PREVIEW"
+      ingestion_definition:
+        ingestion_gateway_id: ${resources.pipelines.supabase_ingestion_gateway.id}
+        objects:
+          - table:
+              source_catalog: "postgres"
+              source_schema: "public"
+              source_table: "orders"
+              destination_catalog: ${var.catalog}
+              destination_schema: "raw"
+              destination_table: "order"
+          - table:
+              source_catalog: "postgres"
+              source_schema: "public"
+              source_table: "order_items"
+              destination_catalog: ${var.catalog}
+              destination_schema: "raw"
+              destination_table: "order_item"

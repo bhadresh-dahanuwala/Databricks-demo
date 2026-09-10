@@ -140,3 +140,37 @@ resource "databricks_grants" "schema_grants" {
     privileges = ["USE_SCHEMA", "SELECT"]
   }
 }
+
+# 12. Azure Key Vault Reference for Secure Secrets
+data "azurerm_key_vault" "kv" {
+  name                = "kv-dbw-ecommerce"
+  resource_group_name = azurerm_resource_group.dbx.name
+}
+
+data "azurerm_key_vault_secret" "supabase_password" {
+  name         = "supabase-db-password"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+# 13. Unity Catalog Connection for Supabase PostgreSQL (Lakeflow Connect CDC)
+resource "databricks_connection" "supabase_postgres" {
+  name            = "supabase_postgres"
+  connection_type = "POSTGRESQL"
+  comment         = "Supabase PostgreSQL connection for Lakeflow Connect CDC"
+
+  options = {
+    host     = "db.upytyqlvqhkfrdswmwuj.supabase.co"
+    port     = "5432"
+    user     = "postgres"
+    password = data.azurerm_key_vault_secret.supabase_password.value
+  }
+}
+
+resource "databricks_grants" "supabase_connection_grants" {
+  foreign_connection = databricks_connection.supabase_postgres.name
+
+  grant {
+    principal  = "account users"
+    privileges = ["USE_CONNECTION"]
+  }
+}
