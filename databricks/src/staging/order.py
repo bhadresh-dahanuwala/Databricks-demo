@@ -1,6 +1,19 @@
 import dlt
-from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date, lit, coalesce
+from pyspark.sql.functions import col, struct, to_json, current_timestamp, to_date, lit, coalesce, from_json
+from pyspark.sql.types import StructType, StructField, StringType
 from util import _validate, pad_missing_columns
+
+KAFKA_ORDER_JSON_SCHEMA = StructType([
+    StructField("id", StringType(), True),
+    StructField("order_timestamp", StringType(), True),
+    StructField("customer_id", StringType(), True),
+    StructField("order_mode", StringType(), True),
+    StructField("order_status", StringType(), True),
+    StructField("return_windows_days", StringType(), True),
+    StructField("discount_percentage", StringType(), True),
+    StructField("shipping_label", StringType(), True),
+    StructField("updated_at", StringType(), True)
+])
 
 ORDER_SCHEMA = {
     "id":                   {"mandatory": True,  "type": "int"},
@@ -43,11 +56,39 @@ def order_parsed_postgres():
     df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order__postgres")
     return _parse_order(df, "POSTGRES")
 
+@dlt.view(name="order_parsed__kafka")
+def order_parsed_kafka():
+    df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order__kafka")
+    parsed_df = (
+        df.withColumn("_parsed", from_json(col("kafka_value"), KAFKA_ORDER_JSON_SCHEMA))
+        .select(
+            col("source_date"),
+            col("_parsed.id").alias("id"),
+            col("_parsed.order_timestamp").alias("order_timestamp"),
+            col("_parsed.customer_id").alias("customer_id"),
+            col("_parsed.order_mode").alias("order_mode"),
+            col("_parsed.order_status").alias("order_status"),
+            col("_parsed.return_windows_days").alias("return_windows_days"),
+            col("_parsed.discount_percentage").alias("discount_percentage"),
+            col("_parsed.shipping_label").alias("shipping_label"),
+            col("_parsed.updated_at").alias("updated_at")
+        )
+    )
+    return _parse_order(parsed_df, "KAFKA")
+
+
+
 @dlt.view(name="order_parsed")
 def order_parsed():
     adls = dlt.read_stream("order_parsed__adls")
     pg = dlt.read_stream("order_parsed__postgres")
-    return adls.unionByName(pg, allowMissingColumns=True)
+    kafka = dlt.read_stream("order_parsed__kafka")
+    return (
+        adls
+        .unionByName(pg, allowMissingColumns=True)
+        .unionByName(kafka, allowMissingColumns=True)
+    )
+
 
 @dlt.view(name="order_valid")
 def order_valid():

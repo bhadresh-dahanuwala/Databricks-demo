@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    kafka_ingestion:
+      name: "Kafka Orders Ingestion & Processing"
+      tasks:
+        - task_key: sync_kafka_to_raw
+          notebook_task:
+            notebook_path: ../../src/raw/kafka_ingestion.py
+        - task_key: run_staging_pipeline
+          depends_on:
+            - task_key: sync_kafka_to_raw
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_staging_pipeline.id}
+        - task_key: run_intermediate_pipeline
+          depends_on:
+            - task_key: run_staging_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_intermediate_pipeline.id}
+        - task_key: run_analytics_pipeline
+          depends_on:
+            - task_key: run_intermediate_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ecomm_analytics_pipeline.id}
