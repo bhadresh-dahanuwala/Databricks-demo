@@ -17,3 +17,9 @@ output "supabase_catalog_name" {
   description = "Name of the Lakehouse Federation foreign catalog for Supabase"
   value       = databricks_catalog.supabase.name
 }
+
+output "confluent_secret_scope_name" {
+  description = "Name of the Databricks secret scope for Confluent Kafka"
+  value       = databricks_secret_scope.confluent.name
+}
+
