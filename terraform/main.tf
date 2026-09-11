@@ -197,3 +197,48 @@ resource "databricks_grants" "supabase_catalog_grants" {
 }
 
 
+# 15. Confluent Kafka
+
+data "azurerm_key_vault_secret" "kafka_bootstrap" {
+  name         = "confluent-kafka-bootstrap-servers"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+data "azurerm_key_vault_secret" "kafka_key" {
+  name         = "confluent-kafka-api-key"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+data "azurerm_key_vault_secret" "kafka_secret" {
+  name         = "confluent-kafka-api-secret"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+# 16. Databricks Secret Scope for Confluent Kafka
+resource "databricks_secret_scope" "confluent" {
+  name = "confluent"
+}
+
+resource "databricks_secret" "kafka_bootstrap" {
+  key          = "bootstrap-servers"
+  string_value = data.azurerm_key_vault_secret.kafka_bootstrap.value
+  scope        = databricks_secret_scope.confluent.name
+}
+
+resource "databricks_secret" "kafka_key" {
+  key          = "api-key"
+  string_value = data.azurerm_key_vault_secret.kafka_key.value
+  scope        = databricks_secret_scope.confluent.name
+}
+
+resource "databricks_secret" "kafka_secret" {
+  key          = "api-secret"
+  string_value = data.azurerm_key_vault_secret.kafka_secret.value
+  scope        = databricks_secret_scope.confluent.name
+}
+
+resource "databricks_secret_acl" "confluent_read" {
+  principal  = "users"
+  permission = "READ"
+  scope      = databricks_secret_scope.confluent.name
+}
