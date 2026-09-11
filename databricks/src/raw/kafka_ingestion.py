@@ -8,9 +8,10 @@ api_key = dbutils.secrets.get(scope="confluent", key="api-key")
 api_secret = dbutils.secrets.get(scope="confluent", key="api-secret")
 
 jaas_config = (
-    f'org.apache.kafka.common.security.plain.PlainLoginModule required '
+    f'kafkashaded.org.apache.kafka.common.security.plain.PlainLoginModule required '
     f'username="{api_key}" password="{api_secret}";'
 )
+
 
 topic = "ecomm.orders"
 target_table = "ecomm.raw.order__kafka"
