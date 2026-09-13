@@ -242,3 +242,38 @@ resource "databricks_secret_acl" "confluent_read" {
   permission = "READ"
   scope      = databricks_secret_scope.confluent.name
 }
+
+# 17. Domino's Labs Catalog, Schemas, and Volume
+resource "databricks_catalog" "dominos_catalog" {
+  name          = "dominos_catalog"
+  comment       = "Dedicated catalog for Domino's labs"
+  force_destroy = true
+  owner         = "account users"
+}
+
+locals {
+  dominos_schemas = {
+    landing = "Landing zone for raw files in Unity Catalog Volume"
+    bronze  = "Raw ingested Delta tables matching source structure"
+    silver  = "Cleaned, standardized, and conformed enterprise data"
+    gold    = "Aggregated business marts, KPIs, and SLA reporting"
+  }
+}
+
+resource "databricks_schema" "dominos_schemas" {
+  for_each      = local.dominos_schemas
+  catalog_name  = databricks_catalog.dominos_catalog.name
+  name          = each.key
+  comment       = each.value
+  force_destroy = true
+  owner         = "account users"
+}
+
+resource "databricks_volume" "dominos_raw_landing" {
+  name         = "raw_landing"
+  catalog_name = databricks_catalog.dominos_catalog.name
+  schema_name  = databricks_schema.dominos_schemas["landing"].name
+  volume_type  = "MANAGED"
+  comment      = "Storage volume for Domino orders, store CSVs, POS logs, and driver telemetry"
+  owner        = "account users"
+}

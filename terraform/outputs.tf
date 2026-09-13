@@ -23,3 +23,13 @@ output "confluent_secret_scope_name" {
   value       = databricks_secret_scope.confluent.name
 }
 
+output "dominos_catalog_name" {
+  description = "Name of the Domino's labs catalog"
+  value       = databricks_catalog.dominos_catalog.name
+}
+
+output "dominos_raw_landing_volume_path" {
+  description = "POSIX path to access files in the Domino's raw landing volume"
+  value       = "/Volumes/${databricks_catalog.dominos_catalog.name}/${databricks_schema.dominos_schemas["landing"].name}/${databricks_volume.dominos_raw_landing.name}/"
+}
+
