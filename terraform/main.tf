@@ -243,9 +243,23 @@ resource "databricks_secret_acl" "confluent_read" {
   scope      = databricks_secret_scope.confluent.name
 }
 
-# 17. Domino's Labs Catalog, Schemas, and Volume
+# 17. Domino's Labs Infrastructure (Storage Container, External Location, Catalog, Schemas, and Volume)
+resource "azurerm_storage_container" "dominos_container" {
+  name                  = "dominos-ext"
+  storage_account_id    = azurerm_storage_account.ext_storage.id
+  container_access_type = "private"
+}
+
+resource "databricks_external_location" "dominos_ext_loc" {
+  name            = "ext_loc_dominos"
+  url             = "abfss://${azurerm_storage_container.dominos_container.name}@${azurerm_storage_account.ext_storage.name}.dfs.core.windows.net/"
+  credential_name = databricks_storage_credential.ext_storage_cred.name
+  force_destroy   = true
+}
+
 resource "databricks_catalog" "dominos_catalog" {
   name          = "dominos_catalog"
+  storage_root  = databricks_external_location.dominos_ext_loc.url
   comment       = "Dedicated catalog for Domino's labs"
   force_destroy = true
   owner         = "account users"
