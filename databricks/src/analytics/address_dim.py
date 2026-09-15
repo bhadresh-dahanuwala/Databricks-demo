@@ -1,13 +1,13 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="address_cdc")
 def address_cdc():
     return (
         spark.readStream.table("ecomm.staging.customer_address")
         .select("line_1", "line_2", "city", "state", "zip", "source_date")
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="address_dim",
     comment="",
     schema="""
@@ -21,7 +21,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="address_dim",
     source="address_cdc",
     keys=["line_1", "line_2", "zip"],

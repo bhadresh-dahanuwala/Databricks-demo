@@ -1,6 +1,6 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="product_fct_cdc")
 def product_fct_cdc():
     df_product_staging = spark.readStream.table("ecomm.staging.product")
     df_product_dim = spark.table("ecomm.analytics.product_dim")
@@ -18,7 +18,7 @@ def product_fct_cdc():
         df_product_staging["source_date"]
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="product_fct",
     comment="Compressed snapshot fact table tracking inventory, cost, and price changes over time.",
     schema="""
@@ -34,7 +34,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="product_fct",
     source="product_fct_cdc",
     keys=["product_id"],

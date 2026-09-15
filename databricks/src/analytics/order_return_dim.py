@@ -1,13 +1,13 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="order_return_cdc")
 def order_return_cdc():
     return (
         spark.readStream.table("ecomm.staging.returns")
         .select("order_id", "return_reason", "source_date")
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="order_return_dim",
     comment="Captures fixed context about the return event.",
     schema="""
@@ -18,7 +18,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="order_return_dim",
     source="order_return_cdc",
     keys=["order_id"],

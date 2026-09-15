@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, struct, to_json, current_timestamp
 from util import _validate, pad_missing_columns
 
@@ -11,7 +11,7 @@ PRODUCT_SCHEMA = {
     "stock":    {"mandatory": False, "type": "int"}
 }
 
-@dlt.view(name="product_parsed")
+@dp.temporary_view(name="product_parsed")
 def product_parsed():
     df = spark.readStream.table("ecomm.raw.product")
     df = pad_missing_columns(df, PRODUCT_SCHEMA)
@@ -26,13 +26,13 @@ def product_parsed():
         df.withColumn("_is_invalid", is_invalid)
     )
 
-@dlt.table(
+@dp.table(
     name="product",
     comment="Cleaned, typed, and validated product data in the staging layer."
 )
 def staging_product():
     return (
-        dlt.read_stream("product_parsed")
+        spark.readStream.table("product_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -45,7 +45,7 @@ def staging_product():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.product",
     comment="Product records missing a mandatory field or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
@@ -53,7 +53,7 @@ def staging_product():
 )
 def staging_product_quarantine():
     return (
-        dlt.read_stream("product_parsed")
+        spark.readStream.table("product_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),

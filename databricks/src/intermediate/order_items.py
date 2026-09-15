@@ -1,7 +1,7 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, datediff, to_date, when, lit
 
-@dlt.table(
+@dp.table(
     name="order_items",
     comment="Enriched order line items with pre-calculated financial measures."
 )

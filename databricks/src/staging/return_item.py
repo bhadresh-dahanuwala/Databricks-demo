@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, struct, to_json, current_timestamp
 from util import _validate, pad_missing_columns
 
@@ -8,7 +8,7 @@ RETURN_ITEM_SCHEMA = {
     "quantity_received": {"mandatory": True, "type": "int"}
 }
 
-@dlt.view(name="return_item_parsed")
+@dp.temporary_view(name="return_item_parsed")
 def return_item_parsed():
     df = spark.readStream.table("ecomm.raw.return_item")
     df = pad_missing_columns(df, RETURN_ITEM_SCHEMA)
@@ -23,13 +23,13 @@ def return_item_parsed():
         df.withColumn("_is_invalid", is_invalid)
     )
 
-@dlt.table(
+@dp.table(
     name="return_item",
     comment="Cleaned, typed, and validated return item data in the staging layer."
 )
 def staging_return_item():
     return (
-        dlt.read_stream("return_item_parsed")
+        spark.readStream.table("return_item_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -39,7 +39,7 @@ def staging_return_item():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.return_item",
     comment="Return item records missing a mandatory field or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
@@ -47,7 +47,7 @@ def staging_return_item():
 )
 def staging_return_item_quarantine():
     return (
-        dlt.read_stream("return_item_parsed")
+        spark.readStream.table("return_item_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),

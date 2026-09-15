@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, struct, to_json, current_timestamp, current_date, lit, coalesce, from_json, explode_outer
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from util import _validate, pad_missing_columns
@@ -39,17 +39,17 @@ def _parse_order_item(df, source_name):
         .withColumn("source_system", lit(source_name))
     )
 
-@dlt.view(name="order_item_parsed__adls")
+@dp.temporary_view(name="order_item_parsed__adls")
 def order_item_parsed_adls():
     df = spark.readStream.table("ecomm.raw.order_item__adls")
     return _parse_order_item(df, "ADLS")
 
-@dlt.view(name="order_item_parsed__postgres")
+@dp.temporary_view(name="order_item_parsed__postgres")
 def order_item_parsed_postgres():
     df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order_item__postgres")
     return _parse_order_item(df, "POSTGRES")
 
-@dlt.view(name="order_item_parsed__kafka")
+@dp.temporary_view(name="order_item_parsed__kafka")
 def order_item_parsed_kafka():
     df = spark.readStream.option("skipChangeCommits", "true").table("ecomm.raw.order__kafka")
     parsed_df = (
@@ -73,11 +73,11 @@ def order_item_parsed_kafka():
 
 
 
-@dlt.view(name="order_item_parsed")
+@dp.temporary_view(name="order_item_parsed")
 def order_item_parsed():
-    adls = dlt.read_stream("order_item_parsed__adls")
-    pg = dlt.read_stream("order_item_parsed__postgres")
-    kafka = dlt.read_stream("order_item_parsed__kafka")
+    adls = spark.readStream.table("order_item_parsed__adls")
+    pg = spark.readStream.table("order_item_parsed__postgres")
+    kafka = spark.readStream.table("order_item_parsed__kafka")
     return (
         adls
         .unionByName(pg, allowMissingColumns=True)
@@ -85,10 +85,10 @@ def order_item_parsed():
     )
 
 
-@dlt.view(name="order_item_valid")
+@dp.temporary_view(name="order_item_valid")
 def order_item_valid():
     return (
-        dlt.read_stream("order_item_parsed")
+        spark.readStream.table("order_item_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -100,7 +100,7 @@ def order_item_valid():
         )
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="order_item",
     comment="Cleaned, typed, and validated order item data in the staging layer. Deduplicated across sources by (order_id, product_id) by latest updated_at/source_date.",
     table_properties={
@@ -109,7 +109,7 @@ dlt.create_streaming_table(
     }
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="order_item",
     source="order_item_valid",
     keys=["order_id", "product_id"],
@@ -117,7 +117,7 @@ dlt.apply_changes(
     stored_as_scd_type=1
 )
 
-@dlt.table(
+@dp.table(
     name="quarantine.order_item",
     comment="Order item records missing a mandatory field or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
@@ -125,7 +125,7 @@ dlt.apply_changes(
 )
 def staging_order_item_quarantine():
     return (
-        dlt.read_stream("order_item_parsed")
+        spark.readStream.table("order_item_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),

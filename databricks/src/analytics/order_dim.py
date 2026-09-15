@@ -1,6 +1,6 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="order_dim_cdc")
 def order_dim_cdc():
     return (
         spark.readStream.option("ignoreChanges", "true").table("ecomm.staging.order")
@@ -15,7 +15,7 @@ def order_dim_cdc():
         )
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="order_dim",
     comment="Dimension containing stable attributes of an order.",
     schema="""
@@ -30,7 +30,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="order_dim",
     source="order_dim_cdc",
     keys=["order_id"],

@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, regexp_extract, to_date
 
 VOLUME_PATH = "/Volumes/ecomm/raw/raw_vol"
@@ -12,7 +12,7 @@ ENTITIES = [
 ]
 
 def generate_raw_table(entity_name, table_name):
-    @dlt.table(
+    @dp.table(
         name=table_name,
         comment=f"Raw {entity_name} data ingested incrementally from ADLS using Auto Loader. "
                  f"Schema/types are auto-inferred and evolve over time; the "

@@ -1,4 +1,4 @@
-CREATE OR REFRESH LIVE TABLE order_item
+CREATE OR REFRESH MATERIALIZED VIEW order_item
 COMMENT "Intermediate order item table enriched with gross and net amounts"
 AS
 SELECT

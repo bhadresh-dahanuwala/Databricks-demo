@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, struct, to_json, current_timestamp, explode
 from util import _validate, pad_missing_columns
 
@@ -39,7 +39,7 @@ CUSTOMER_ADDRESS_SCHEMA = {
     },
 }
 
-@dlt.view(name="customer_parsed")
+@dp.temporary_view(name="customer_parsed")
 def customer_parsed():
     df = spark.readStream.table("ecomm.raw.customer")
     df = pad_missing_columns(df, CUSTOMER_SCHEMA)
@@ -56,13 +56,13 @@ def customer_parsed():
     )
 
 
-@dlt.table(
+@dp.table(
     name="customer",
     comment="Cleaned, typed, and validated customer data (including nested addresses) in the staging layer."
 )
 def staging_customer():
     return (
-        dlt.read_stream("customer_parsed")
+        spark.readStream.table("customer_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -72,7 +72,7 @@ def staging_customer():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.customer",
     comment="Customer records missing a mandatory field (at any nesting level) or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
@@ -80,7 +80,7 @@ def staging_customer():
 )
 def staging_customer_quarantine():
     return (
-        dlt.read_stream("customer_parsed")
+        spark.readStream.table("customer_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),
@@ -89,7 +89,7 @@ def staging_customer_quarantine():
         )
     )
 
-@dlt.view(name="customer_contact_parsed")
+@dp.temporary_view(name="customer_contact_parsed")
 def customer_contact_parsed():
     df = spark.readStream.table("ecomm.raw.customer")
     df = pad_missing_columns(df, CUSTOMER_CONTACT_SCHEMA)
@@ -105,13 +105,13 @@ def customer_contact_parsed():
         .withColumnRenamed("id", "customer_id")
     )
 
-@dlt.table(
+@dp.table(
     name="customer_contact",
     comment="One-to-many relationship table containing customer_id and contact_number."
 )
 def staging_customer_contact():
     return (
-        dlt.read_stream("customer_contact_parsed")
+        spark.readStream.table("customer_contact_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -120,13 +120,13 @@ def staging_customer_contact():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.customer_contact",
     comment="Customer contact records missing a mandatory field or failing an expected data type."
 )
 def staging_customer_contact_quarantine():
     return (
-        dlt.read_stream("customer_contact_parsed")
+        spark.readStream.table("customer_contact_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),
@@ -135,7 +135,7 @@ def staging_customer_contact_quarantine():
         )
     )
 
-@dlt.view(name="customer_address_parsed")
+@dp.temporary_view(name="customer_address_parsed")
 def customer_address_parsed():
     df = spark.readStream.table("ecomm.raw.customer")
     df = pad_missing_columns(df, CUSTOMER_ADDRESS_SCHEMA)
@@ -151,13 +151,13 @@ def customer_address_parsed():
         .withColumnRenamed("id", "customer_id")
     )
 
-@dlt.table(
+@dp.table(
     name="customer_address",
     comment="One-to-many relationship table containing customer_id and flattened address fields."
 )
 def staging_customer_address():
     return (
-        dlt.read_stream("customer_address_parsed")
+        spark.readStream.table("customer_address_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -176,13 +176,13 @@ def staging_customer_address():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.customer_address",
     comment="Customer address records missing a mandatory field or failing an expected data type."
 )
 def staging_customer_address_quarantine():
     return (
-        dlt.read_stream("customer_address_parsed")
+        spark.readStream.table("customer_address_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),

@@ -1,13 +1,13 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="product_dim_cdc")
 def product_dim_cdc():
     return (
         spark.readStream.table("ecomm.staging.product")
         .select("product_id", "product_name", "product_category", "source_date")
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="product_dim",
     comment="Product dimension (Type 1) containing stable attributes.",
     schema="""
@@ -19,7 +19,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="product_dim",
     source="product_dim_cdc",
     keys=["product_id"],

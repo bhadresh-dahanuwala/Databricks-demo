@@ -1,7 +1,7 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, date_format, lit, to_date, when
 
-@dlt.view
+@dp.temporary_view(name="return_item_cdc")
 def return_item_cdc():
     df_ret_item = spark.readStream.option("ignoreChanges", "true").table("ecomm.intermediate.return_items")
     df_order_ret_dim = spark.table("ecomm.analytics.order_return_dim")
@@ -27,7 +27,7 @@ def return_item_cdc():
         df_ret_item["source_date"]
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="return_item_fct",
     comment="Fact table for return line items.",
     schema="""
@@ -49,7 +49,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="return_item_fct",
     source="return_item_cdc",
     keys=["order_id", "product_id"],

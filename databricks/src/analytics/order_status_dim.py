@@ -1,6 +1,6 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="order_status_cdc")
 def order_status_cdc():
     return (
         spark.readStream.option("ignoreChanges", "true").table("ecomm.staging.order")
@@ -11,7 +11,7 @@ def order_status_cdc():
         )
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="order_status_dim",
     comment="Order status transitions over time (SCD Type 2).",
     schema="""
@@ -25,7 +25,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="order_status_dim",
     source="order_status_cdc",
     keys=["order_id"],

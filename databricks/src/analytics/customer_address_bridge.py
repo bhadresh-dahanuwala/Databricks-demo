@@ -1,6 +1,6 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="customer_address_cdc")
 def customer_address_cdc():
     df_customer_address = spark.readStream.table("ecomm.staging.customer_address")
     # Read address_dim as a static table (batch) for lookup
@@ -17,7 +17,7 @@ def customer_address_cdc():
         df_customer_address["source_date"]
     )
 
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="customer_address_bridge",
     comment="Historized bridge resolving the many-to-many relationship between customers and addresses.",
     schema="""
@@ -32,7 +32,7 @@ dlt.create_streaming_table(
     """
 )
 
-dlt.apply_changes(
+dp.create_auto_cdc_flow(
     target="customer_address_bridge",
     source="customer_address_cdc",
     keys=["customer_id", "address_type"],

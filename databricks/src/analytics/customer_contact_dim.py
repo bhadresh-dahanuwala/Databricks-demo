@@ -1,11 +1,11 @@
-import dlt
+from pyspark import pipelines as dp
 
-@dlt.view
+@dp.temporary_view(name="customer_contact_cdc")
 def customer_contact_cdc():
     return spark.readStream.table("ecomm.staging.customer_contact")
 
 # Define the target SCD table with an identity column for the integer surrogate key
-dlt.create_streaming_table(
+dp.create_streaming_table(
     name="customer_contact_dim",
     comment="Final Type 2 Dimension for Customer Contacts",
     schema="""
@@ -19,8 +19,8 @@ dlt.create_streaming_table(
     """
 )
 
-# Use Databricks DLT native SCD Type 2 handling
-dlt.apply_changes(
+# Use Lakeflow pipelines native SCD Type 2 handling
+dp.create_auto_cdc_flow(
     target="customer_contact_dim",
     source="customer_contact_cdc",
     keys=["customer_id", "contact_number"],

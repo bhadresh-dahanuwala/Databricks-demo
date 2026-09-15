@@ -1,4 +1,4 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, struct, to_json, current_timestamp
 from util import _validate, pad_missing_columns
 
@@ -9,7 +9,7 @@ RETURN_SCHEMA = {
     "return_status": {"mandatory": True, "type": "string"}
 }
 
-@dlt.view(name="returns_parsed")
+@dp.temporary_view(name="returns_parsed")
 def returns_parsed():
     df = spark.readStream.table("ecomm.raw.return")
     df = pad_missing_columns(df, RETURN_SCHEMA)
@@ -24,13 +24,13 @@ def returns_parsed():
         df.withColumn("_is_invalid", is_invalid)
     )
 
-@dlt.table(
+@dp.table(
     name="returns",
     comment="Cleaned, typed, and validated return data in the staging layer."
 )
 def staging_returns():
     return (
-        dlt.read_stream("returns_parsed")
+        spark.readStream.table("returns_parsed")
         .filter("_is_invalid = false")
         .select(
             col("source_date"),
@@ -41,7 +41,7 @@ def staging_returns():
         )
     )
 
-@dlt.table(
+@dp.table(
     name="quarantine.returns",
     comment="Return records missing a mandatory field or failing an expected data type. "
              "raw_record is reconstructed from the raw layer's parsed columns -- it reflects the same data as "
@@ -49,7 +49,7 @@ def staging_returns():
 )
 def staging_returns_quarantine():
     return (
-        dlt.read_stream("returns_parsed")
+        spark.readStream.table("returns_parsed")
         .filter("_is_invalid = true")
         .select(
             col("source_date"),

@@ -1,7 +1,7 @@
-import dlt
+from pyspark import pipelines as dp
 from pyspark.sql.functions import col, sum as _sum, first
 
-@dlt.table(
+@dp.materialized_view(
     name="order_fct",
     comment="Fact table for order level aggregations.",
     schema="""
